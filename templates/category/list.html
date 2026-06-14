@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h1 class="page-title">🗂️ Категорії товарів</h1>
+    <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">➕ Додати категорію</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Назва категорії</th>
+                    <th class="text-end">Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('product.manage_products', category_id=cat.category_number) }}" class="text-decoration-none fw-bold text-dark">
+                            {{ cat.category_name }}
+                        </a>
+                    </td>
+                    <td class="text-end">
+                        <form action="{{ url_for('category.delete_category', category_number=cat.category_number) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('УВАГА: Це видалить категорію та ВСІ товари в ній. Продовжити?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Видалити категорію</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

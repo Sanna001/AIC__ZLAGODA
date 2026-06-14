@@ -87,11 +87,15 @@ def edit_category(category_number):
 def delete_category(category_number):
     conn = get_db_connection()
     try:
+        # Спочатку видаляємо всі товари, що належать цій категорії
+        conn.execute('DELETE FROM Product WHERE category_number = ?', (category_number,))
+        # Тепер видаляємо саму категорію
         conn.execute('DELETE FROM Category WHERE category_number = ?', (category_number,))
         conn.commit()
-        flash("Категорію видалено!", "success")
-    except Exception:
-        flash("Неможливо видалити категорію, що містить товари!", "danger")
+        flash("Категорію та всі пов'язані з нею товари успішно видалено!", "success")
+    except Exception as e:
+        conn.rollback()
+        flash(f"Помилка при видаленні: {str(e)}", "danger")
     finally:
         conn.close()
     return redirect(url_for('category.list_categories'))
