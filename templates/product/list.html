@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог товарів | АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">📦 Каталог товарів супермаркету</h1>
+    {% if session.get('role') == 'Manager' %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+        ➕ Додати новий товар до каталогу
+    </button>
+    {% endif %}
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('product.manage_products') }}" class="row g-3">
+            <div class="col-md-5">
+                <input type="text" name="search_name" class="form-control" placeholder="Пошук за назвою товару..." value="{{ request.args.get('search_name', '') }}">
+            </div>
+            <div class="col-md-4">
+                <select name="category_id" class="form-select">
+                    <option value="">Всі категорії</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.category_number }}" {% if request.args.get('category_id')|string == cat.category_number|string %}selected{% endif %}>
+                        {{ cat.category_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">🔍 Знайти</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Загальний перелік товарних позицій</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID Товару</th>
+                        <th>Назва товару</th>
+                        <th>Категорія (Номер)</th>
+                        <th>Характеристики</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in products %}
+                    <tr>
+                        <td><code>{{ prod.id_product }}</code></td>
+                        <td><strong>{{ prod.product_name }}</strong></td>
+                        <td><span class="badge bg-light text-dark">ID: {{ prod.category_number }}</span></td>
+                        <td class="text-muted"><small>{{ prod.characteristics or 'Немає опису' }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Товарів у каталозі не знайдено.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{{ url_for('analytics.print_report', report_type='catalog_products', search_name=request.args.get('search_name', ''), category_id=request.args.get('category_id', '')) }}" target="_blank" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+        <span>🖨️ Надрукувати звіт по каталогу товарів</span>
+    </a>
+</div>
+{% endblock %}

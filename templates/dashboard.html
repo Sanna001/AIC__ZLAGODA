@@ -1,17 +1,159 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Панель Злагода</title>
-</head>
-<body>
-    <h1>Вітаємо в «ZLAGODA» </h1>
-    <h2>Користувач: {{ name }}</h2>
-    <h3>Роль у системі: {{ role }}</h3>
-    
-    <hr>
-    <p>Тут буде робоче місце для вашої ролі.</p>
-    
-    <a href="/auth/logout"><button>Вийти з системи</button></a>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Головна — АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="page-title">Вітаємо, {{ name }}! 👋</div>
+
+{% if role == 'Manager' %}
+<!-- ══ ПАНЕЛЬ МЕНЕДЖЕРА ══ -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">👥</div>
+                <div class="fw-600 text-muted small mb-1">Управління персоналом</div>
+                <a href="{{ url_for('employees.list_employees') }}" class="btn btn-primary btn-sm mt-2">
+                    Переглянути працівників
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">📦</div>
+                <div class="fw-600 text-muted small mb-1">Товари та категорії</div>
+                <a href="{{ url_for('product.manage_products') }}" class="btn btn-primary btn-sm mt-2 me-1">
+                    Товари
+                </a>
+                <a href="{{ url_for('category.list_categories') }}" class="btn btn-outline-secondary btn-sm mt-2">
+                    Категорії
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">📊</div>
+                <div class="fw-600 text-muted small mb-1">Аналітика та звіти</div>
+                <a href="{{ url_for('analytics.financial_report') }}" class="btn btn-primary btn-sm mt-2">
+                    Фінансовий звіт
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">🏪</div>
+                <div class="fw-600 text-muted small mb-1">Товари в магазині</div>
+                <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-primary btn-sm mt-2">
+                    Переглянути
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">💳</div>
+                <div class="fw-600 text-muted small mb-1">Картки клієнтів</div>
+                <a href="{{ url_for('customer_card.manage_customers') }}" class="btn btn-primary btn-sm mt-2">
+                    Переглянути
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">🖨️</div>
+                <div class="fw-600 text-muted small mb-1">Друк звітів</div>
+                <a href="{{ url_for('analytics.print_report', report_type='employees') }}"
+                   class="btn btn-outline-secondary btn-sm mt-2 me-1">Працівники</a>
+                <a href="{{ url_for('analytics.print_report', report_type='products') }}"
+                   class="btn btn-outline-secondary btn-sm mt-2">Товари</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif role == 'Cashier' %}
+<!-- ══ ПАНЕЛЬ КАСИРА ══ -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">🧾</div>
+                <div class="fw-600 text-muted small mb-1">Продаж товарів</div>
+                <a href="{{ url_for('check.create_check') }}" class="btn btn-primary btn-sm mt-2">
+                    Створити чек
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">📅</div>
+                <div class="fw-600 text-muted small mb-1">Мої чеки</div>
+                <a href="{{ url_for('check.my_checks_today') }}" class="btn btn-primary btn-sm mt-2 me-1">
+                    За сьогодні
+                </a>
+                <a href="{{ url_for('check.my_checks') }}" class="btn btn-outline-secondary btn-sm mt-2">
+                    За період
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">🏪</div>
+                <div class="fw-600 text-muted small mb-1">Товари в магазині</div>
+                <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-primary btn-sm mt-2">
+                    Переглянути
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">💳</div>
+                <div class="fw-600 text-muted small mb-1">Клієнти</div>
+                <a href="{{ url_for('customer_card.manage_customers') }}" class="btn btn-primary btn-sm mt-2 me-1">
+                    Переглянути
+                </a>
+                <a href="{{ url_for('customer_card.add_customer') }}" class="btn btn-outline-secondary btn-sm mt-2">
+                    Додати
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">👤</div>
+                <div class="fw-600 text-muted small mb-1">Мій профіль</div>
+                <a href="{{ url_for('employees.profile') }}" class="btn btn-primary btn-sm mt-2">
+                    Переглянути
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="fs-2 mb-1">🔍</div>
+                <div class="fw-600 text-muted small mb-1">Пошук товару за UPC</div>
+                <a href="{{ url_for('store_product.search_by_upc') }}" class="btn btn-primary btn-sm mt-2">
+                    Пошук
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

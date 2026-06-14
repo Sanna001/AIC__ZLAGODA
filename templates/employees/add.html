@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Додати працівника | АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">➕ Зареєструвати нового працівника</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('employees.add_employee') }}">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">ID працівника (Exxx)</label>
+                        <input type="text" name="id_employee" class="form-control" required placeholder="E103">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Прізвище</label>
+                        <input type="text" name="empl_surname" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Ім'я</label>
+                        <input type="text" name="empl_name" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">По-батькові</label>
+                        <input type="text" name="empl_patronymic" class="form-control">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Роль</label>
+                        <select name="empl_role" class="form-select" required>
+                            <option value="Cashier">Касир</option>
+                            <option value="Manager">Менеджер</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Зарплата (грн)</label>
+                        <input type="number" name="salary" class="form-control" step="0.01" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Дата народження</label>
+                        <input type="date" name="date_of_birth" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Дата найму</label>
+                        <input type="date" name="date_of_start" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Телефон</label>
+                        <input type="text" name="phone_number" class="form-control" placeholder="+380..." required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Місто</label>
+                        <input type="text" name="city" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Вулиця</label>
+                        <input type="text" name="street" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Поштовий індекс</label>
+                        <input type="text" name="zip_code" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('employees.list_employees') }}" class="btn btn-secondary">Скасувати</a>
+                    <button type="submit" class="btn btn-success">✅ Зберегти працівника</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

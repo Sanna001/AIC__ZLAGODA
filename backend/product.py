@@ -1,49 +1,37 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from initdb import get_db_connection
+from backend.initdb import get_db_connection
 from decorators import login_required, roles_required
 
-# Назва блюпринту тепер 'product'
-product_bp = Blueprint('product', __name__, url_prefix='/product')
+product_bp = Blueprint('product', __name__, url_prefix='/products')
 
-# Перегляд — усі товари, пошук за категорією та назвою
+
+# Вимоги 9, 13 (Manager) / Вимога 1 (Cashier): товари за назвою, фільтр за категорією
 @product_bp.route('/')
 @login_required
-@roles_required('Manager', 'Cashier')
-def list_products():
-    category_id = request.args.get('category', '').strip()
-    search = request.args.get('search', '').strip()
-
-    conn = get_db_connection()
-    categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
+def manage_products():
+    cat_filter = request.args.get('category_id', '')
 
     query = '''
         SELECT p.*, c.category_name FROM Product p
         JOIN Category c ON p.category_number = c.category_number
-        WHERE 1=1
     '''
     params = []
+    if cat_filter:
+        query += " WHERE p.category_number = ?"
+        params.append(cat_filter)
+    query += " ORDER BY p.product_name"
 
-    if category_id:
-        query += ' AND p.category_number = ?'
-        params.append(category_id)
-
-    if search:
-        query += ' AND LOWER(p.product_name) LIKE LOWER(?)'
-        params.append(f'%{search}%')
-
-    query += ' ORDER BY p.product_name'
-
+    conn = get_db_connection()
     products = conn.execute(query, params).fetchall()
+    categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
     conn.close()
-
     return render_template('product/list.html',
                            products=products,
                            categories=categories,
-                           selected_category=category_id,
-                           search=search)
+                           cat_filter=cat_filter)
 
 
-# Додавання товару — лише менеджер
+# Вимога 1 (Manager): додати товар
 @product_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -52,30 +40,35 @@ def add_product():
     categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
 
     if request.method == 'POST':
+        id_prod = request.form.get('id_product', '').strip()
+        cat_num = request.form.get('category_number', '').strip()
+        name = request.form.get('product_name', '').strip()
+        chars = request.form.get('characteristics', '').strip() or None
+
+        if not id_prod or not cat_num or not name:
+            flash("Заповніть усі обов'язкові поля!", "danger")
+            conn.close()
+            return render_template('product/add.html', categories=categories)
+
         try:
-            conn.execute('''
-                INSERT INTO Product (id_product, category_number, product_name, characteristics)
-                VALUES (?, ?, ?, ?)
-            ''', (
-                request.form.get('id_product'),
-                request.form.get('category_number'),
-                request.form.get('product_name'),
-                request.form.get('characteristics') or None
-            ))
+            conn.execute(
+                'INSERT INTO Product (id_product, category_number, product_name, characteristics) VALUES (?, ?, ?, ?)',
+                (int(id_prod), int(cat_num), name, chars)
+            )
             conn.commit()
-            flash("Товар додано!", "success")
-            return redirect(url_for('product.list_products'))
+            flash("Товар успішно додано!", "success")
+            return redirect(url_for('product.manage_products'))
         except Exception as e:
+            conn.rollback()
             flash(f"Помилка: {str(e)}", "danger")
         finally:
             conn.close()
-    else:
-        conn.close()
 
+    conn.close()
     return render_template('product/add.html', categories=categories)
 
 
-# Редагування товару — лише менеджер
+# Вимога 2 (Manager): редагувати товар
 @product_bp.route('/edit/<int:id_product>', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -89,24 +82,29 @@ def edit_product(id_product):
     if not product:
         conn.close()
         flash("Товар не знайдено!", "danger")
-        return redirect(url_for('product.list_products'))
+        return redirect(url_for('product.manage_products'))
 
     if request.method == 'POST':
+        cat_num = request.form.get('category_number', '').strip()
+        name = request.form.get('product_name', '').strip()
+        chars = request.form.get('characteristics', '').strip() or None
+
+        if not cat_num or not name:
+            flash("Заповніть усі обов'язкові поля!", "danger")
+            conn.close()
+            return render_template('product/edit.html', product=product, categories=categories)
+
         try:
             conn.execute('''
-                UPDATE Product SET
-                    category_number = ?, product_name = ?, characteristics = ?
+                UPDATE Product
+                SET category_number = ?, product_name = ?, characteristics = ?
                 WHERE id_product = ?
-            ''', (
-                request.form.get('category_number'),
-                request.form.get('product_name'),
-                request.form.get('characteristics') or None,
-                id_product
-            ))
+            ''', (int(cat_num), name, chars, id_product))
             conn.commit()
-            flash("Товар оновлено!", "success")
-            return redirect(url_for('product.list_products'))
+            flash("Товар успішно оновлено!", "success")
+            return redirect(url_for('product.manage_products'))
         except Exception as e:
+            conn.rollback()
             flash(f"Помилка: {str(e)}", "danger")
         finally:
             conn.close()
@@ -115,7 +113,7 @@ def edit_product(id_product):
     return render_template('product/edit.html', product=product, categories=categories)
 
 
-# Видалення товару — лише менеджер
+# Вимога 3 (Manager): видалити товар
 @product_bp.route('/delete/<int:id_product>', methods=['POST'])
 @login_required
 @roles_required('Manager')
@@ -124,9 +122,10 @@ def delete_product(id_product):
     try:
         conn.execute('DELETE FROM Product WHERE id_product = ?', (id_product,))
         conn.commit()
-        flash("Товар видалено!", "success")
-    except Exception as e:
-        flash("Неможливо видалити товар: він використовується у замовленнях або інших записах.", "danger")
+        flash("Товар успішно видалено!", "success")
+    except Exception:
+        conn.rollback()
+        flash("Неможливо видалити товар, який присутній у магазині або чеках!", "danger")
     finally:
         conn.close()
-    return redirect(url_for('product.list_products'))
+    return redirect(url_for('product.manage_products'))

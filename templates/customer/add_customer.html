@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Новий клієнт | АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">➕ Реєстрація нового клієнта</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('customer_card.add_customer') }}">
+                <div class="mb-3">
+                    <label class="form-label">Номер картки</label>
+                    <input type="text" name="card_number" class="form-control" required placeholder="Наприклад: CC102">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Прізвище</label>
+                        <input type="text" name="cust_surname" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Ім'я</label>
+                        <input type="text" name="cust_name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Телефон</label>
+                    <input type="text" name="phone_number" class="form-control" required placeholder="+380...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Відсоток знижки (%)</label>
+                    <input type="number" name="percent" class="form-control" min="0" max="100" required>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('customer_card.manage_customers') }}" class="btn btn-secondary">Скасувати</a>
+                    <button type="submit" class="btn btn-success">✅ Зберегти клієнта</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

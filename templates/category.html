@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Категорії | АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">📁 Категорії товарів</h1>
+    {% if session.get('role') == 'Manager' %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+        ➕ Додати категорію
+    </button>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">Список категорій</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Номер категорії</th>
+                        <th>Назва категорії</th>
+                        {% if session.get('role') == 'Manager' %}
+                        <th class="text-end">Дії</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td><code>{{ category.category_number }}</code></td>
+                        <td><strong>{{ category.category_name }}</strong></td>
+                        {% if session.get('role') == 'Manager' %}
+                        <td class="text-end">
+                            <form action="{{ url_for('category.delete_category', id=category.category_number) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ви впевнені, що хочете видалити цю категорію?')">🗑️</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted py-4">Категорій ще немає.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if session.get('role') == 'Manager' %}
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Нова категорія</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('category.add_category') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Назва категорії</label>
+                        <input type="text" name="category_name" class="form-control" required placeholder="Наприклад, Молочні продукти">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Зберегти</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

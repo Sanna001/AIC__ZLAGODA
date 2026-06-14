@@ -1,5 +1,5 @@
 # employees.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash
 from initdb import get_db_connection
 from decorators import login_required, roles_required
@@ -36,6 +36,22 @@ def list_employees():
     return render_template('employees/list.html',
                            employees=employees, role=role, search=search)
 
+# У файлі employees.py
+@employees_bp.route('/view/<id_employee>')
+@login_required
+@roles_required('Manager')
+def view_employee(id_employee):
+    conn = get_db_connection()
+    # Отримуємо дані конкретного працівника за його ID
+    emp = conn.execute('SELECT * FROM Employee WHERE id_employee = ?', (id_employee,)).fetchone()
+    conn.close()
+    
+    if not emp:
+        flash("Працівника не знайдено!", "danger")
+        return redirect(url_for('employees.list_employees'))
+        
+    # Використовуємо той самий шаблон profile.html
+    return render_template('employees/profile.html', employee=emp)
 
 # Вимога 15 (Cashier): інформація про себе
 @employees_bp.route('/profile')
@@ -189,20 +205,23 @@ def edit_employee(id_employee):
 
 
 # Вимога 3 (Manager): видалити (деактивувати) працівника
+# Видалення працівника (у вашому employees.py)
 @employees_bp.route('/delete/<id_employee>', methods=['POST'])
 @login_required
 @roles_required('Manager')
 def delete_employee(id_employee):
+    # Захист: менеджер не може видалити самого себе
+    if session.get('user_id') == id_employee:
+        flash("Ви не можете звільнити самого себе!", "danger")
+        return redirect(url_for('employees.list_employees'))
+
     conn = get_db_connection()
     try:
         conn.execute('DELETE FROM Employee WHERE id_employee = ?', (id_employee,))
         conn.commit()
         flash("Працівника успішно видалено.", "success")
-    except sqlite3.IntegrityError:
-        flash("Неможливо видалити працівника, оскільки він має пов'язані записи "
-              "в системі (чеки). Спробуйте деактивувати профіль.", "danger")
     except Exception as e:
-        flash(f"Сталася помилка: {str(e)}", "danger")
+        flash(f"Неможливо видалити (можливо, є записи в чеках): {str(e)}", "danger")
     finally:
         conn.close()
     return redirect(url_for('employees.list_employees'))

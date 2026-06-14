@@ -1,9 +1,13 @@
 import sqlite3
+import os
 from werkzeug.security import generate_password_hash
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, '..', 'zlagoda.db')
 
 
 def get_db_connection():
-    conn = sqlite3.connect("zlagoda.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
@@ -125,15 +129,30 @@ def setup_database():
     cursor.execute("INSERT INTO Category VALUES (1, 'Beverages')")
     cursor.execute("INSERT INTO Category VALUES (2, 'Fruits')")
     cursor.execute("INSERT INTO Category VALUES (3, 'Vegetables')")
+    cursor.execute("INSERT INTO Category VALUES (4, 'Dairy')")
+    cursor.execute("INSERT INTO Category VALUES (5, 'Bakery')")
+    cursor.execute("INSERT INTO Category VALUES (6, 'Sweets')")
+
 
     cursor.execute("INSERT INTO Product VALUES (1001, 1, 'Pepsi zero', 'Pepsi without sugar 500ml')")
     cursor.execute("INSERT INTO Product VALUES (1002, 2, 'Dragon-fruit', 'Sweet')")
     cursor.execute("INSERT INTO Product VALUES (1003, 3, 'Baby-carrot', 'baby carrot big pack 700g')")
+    cursor.execute("INSERT INTO Product VALUES (1004, 4, 'Mozzarella', 'italian')")
+    cursor.execute("INSERT INTO Product VALUES (1005, 5, 'Сroissant', 'with almond cream')")
+    cursor.execute("INSERT INTO Product VALUES (1006, 5, 'Сroissant', 'with strawberry jam')")
+    cursor.execute("INSERT INTO Product VALUES (1007, 6, 'Lollipop', 'big pepsi-flavored with gum inside')")
+    cursor.execute("INSERT INTO Product VALUES (1008, 4, 'Milk', 'lactose-free, 1 liter')")
+    cursor.execute("INSERT INTO Product VALUES (1009, 1, 'Orange Juice', 'orange fresh juice without sugar, 1 liter')")
+    cursor.execute("INSERT INTO Product VALUES (1010, 6, 'Chocolate bar', 'sweet, cocoa-based, can be milk')")
+    cursor.execute("INSERT INTO Product VALUES (1011, 6, 'Marshmallow', 'big, pink, 100g')")
+    cursor.execute("INSERT INTO Product VALUES (1012, 2, 'Avocado', 'big')")
+    cursor.execute("INSERT INTO Product VALUES (1013, 1, 'Herbal tea', 'cold, caffeine-free, 500ml')")
 
     # Додано паролі на кінець таблиці
     cursor.execute("INSERT INTO Employee VALUES ('E100', 'Gevalo', 'Liza', 'Romanivna', 'Manager', 45000, '2000-09-09', '2024-10-01', '+380973349688', 'Kyiv', 'Johna McCana 31a', '31045', ?)", (manager_password,))
     cursor.execute("INSERT INTO Employee VALUES ('E101', 'Vus', 'Sofia', 'Oleksiivna', 'Cashier', 20000, '1999-06-02', '2025-05-12', '+380675550310', 'Kyiv', 'Velyka Vasylkivska 67', '31065', ?)", (cashier_password,))
-
+    cursor.execute("INSERT INTO Employee VALUES ('E102', 'Bybis', 'Pavlo', 'Oleksandrovich', 'Cashier', 20000, '1998-01-09', '2025-03-12', '+380981237088', 'Kyiv', 'Velyka Vasylkivska 12', '31065', ?)", (cashier_password,))
+   
     # Додано відсотки знижки (5 та 10) на кінець
     cursor.execute("INSERT INTO Customer_Card VALUES ('CC100', 'Afanasieva', 'Maria', 'Mykolaivna', '+380970543673', 'Kyiv', 'Tarasa Shevchenka 12B', '31021', 5)")
     cursor.execute("INSERT INTO Customer_Card VALUES ('CC101', 'Pavelko', 'Olha', 'Ivanivna', '+380665445123', 'Kyiv', 'Ioana Pavla2 11', '31034', 10)")

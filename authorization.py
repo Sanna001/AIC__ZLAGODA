@@ -1,13 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import check_password_hash
 from backend.initdb import get_db_connection
+from decorators import login_required
 
-# Створюємо Блупрінт
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/', methods=['GET', 'POST'])
 def login():
-    # Якщо вже в системі, не показуємо логін знову
     if 'user_id' in session:
         return redirect(url_for('auth.dashboard'))
 
@@ -18,7 +17,6 @@ def login():
         password = request.form.get('password', '')
 
         conn = get_db_connection()
-        # Шукаємо за ПІБ
         user = conn.execute("""
             SELECT * FROM Employee 
             WHERE LOWER(empl_surname) = LOWER(?) 
@@ -34,13 +32,12 @@ def login():
             return redirect(url_for('auth.dashboard'))
         else:
             flash("Невірні дані або пароль!", "danger")
-            
+
     return render_template('login.html')
 
 @auth_bp.route('/dashboard')
+@login_required
 def dashboard():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
     return render_template('dashboard.html', role=session['role'], name=session['user_name'])
 
 @auth_bp.route('/logout')

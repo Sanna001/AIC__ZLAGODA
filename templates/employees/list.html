@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Працівники | АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">👥 Управління персоналом</h1>
+    <a href="{{ url_for('employees.add_employee') }}" class="btn btn-primary">
+        ➕ Зареєструвати працівника
+    </a>
+</div>
+
+<div class="mt-3 mb-4">
+    <a href="{{ url_for('analytics.print_report', report_type='employees', role=request.args.get('role', '')) }}" target="_blank" class="btn btn-outline-secondary">
+        🖨️ Надрукувати звіт по працівниках
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('employees.list_employees') }}" class="row g-3">
+            <div class="col-md-6">
+                <select name="role" class="form-select">
+                    <option value="">Всі ролі</option>
+                    <option value="Manager" {% if request.args.get('role') == 'Manager' %}selected{% endif %}>Менеджери</option>
+                    <option value="Cashier" {% if request.args.get('role') == 'Cashier' %}selected{% endif %}>Касири</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary w-100">🔍 Фільтрувати</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Штат супермаркету</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ПІБ працівника</th>
+                        <th>Роль</th>
+                        <th>Зарплата</th>
+                        <th>Телефон</th>
+                        <th>Місто / Вулиця</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td><code>{{ emp.id_employee }}</code></td>
+                        <td>
+                            <a href="{{ url_for('employees.view_employee', id_employee=emp.id_employee) }}" class="text-decoration-none">
+                                <strong>{{ emp.empl_surname }} {{ emp.empl_name }} {{ emp.empl_patronymic }}</strong>
+                            </a>
+                        </td>
+                        <td>
+                            {% if emp.empl_role == 'Manager' %}
+                                <span class="badge bg-danger">Менеджер</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">Касир</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.salary }} грн</td>
+                        <td>{{ emp.phone_number }}</td>
+                        <td>{{ emp.city }}, {{ emp.street }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Працівників не знайдено.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

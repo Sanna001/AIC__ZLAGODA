@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}АІС Злагода{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h1>🛒 АІС ЗЛАГОДА</h1>
+        <small>Інформаційна система</small>
+    </div>
+
+    <nav>
+        <!-- Загальне (для всіх) -->
+        <div class="nav-section-label">Загальне</div>
+        <a href="{{ url_for('auth.dashboard') }}" class="nav-link">
+            🏠 Головна панель
+        </a>
+        <a href="{{ url_for('employees.profile') }}" class="nav-link">
+            👤 Мій профіль
+        </a>
+
+        <!-- Товари (для всіх) -->
+        <div class="nav-section-label">Товари</div>
+        <a href="{{ url_for('product.manage_products') }}" class="nav-link">
+            📋 Каталог товарів
+        </a>
+        <a href="{{ url_for('store_product.list_store_products') }}" class="nav-link">
+            🏪 Товари в магазині
+        </a>
+        <a href="{{ url_for('store_product.view_promotional') }}" class="nav-link">
+            🏷️ Акційні товари
+        </a>
+        <a href="{{ url_for('store_product.search_by_upc') }}" class="nav-link">
+            🔍 Пошук за UPC
+        </a>
+        <a href="{{ url_for('customer_card.manage_customers') }}" class="nav-link">
+            💳 Клієнти
+        </a>
+
+        {% if session.get('role') == 'Cashier' %}
+        <!-- Панель касира -->
+        <div class="nav-section-label">Робоче місце касира</div>
+        <a href="{{ url_for('check.create_check') }}" class="nav-link">
+            🧾 Створити чек
+        </a>
+        <a href="{{ url_for('check.my_checks_today') }}" class="nav-link">
+            📅 Чеки за сьогодні
+        </a>
+        <a href="{{ url_for('check.my_checks') }}" class="nav-link">
+            📆 Чеки за період
+        </a>
+        {% endif %}
+
+        {% if session.get('role') == 'Manager' %}
+        <!-- Панель менеджера -->
+        <div class="nav-section-label">Управління</div>
+        <a href="{{ url_for('employees.list_employees') }}" class="nav-link">
+            👥 Працівники
+        </a>
+        <a href="{{ url_for('category.list_categories') }}" class="nav-link">
+            🗂️ Категорії
+        </a>
+
+        <div class="nav-section-label">Аналітика</div>
+        <a href="{{ url_for('analytics.financial_report') }}" class="nav-link">
+            📊 Звіт по чеках
+        </a>
+        <a href="{{ url_for('analytics.product_sales_volume') }}" class="nav-link">
+            📈 Продажі товару
+        </a>
+
+        <div class="nav-section-label">Звіти для друку</div>
+        <a href="{{ url_for('analytics.print_report', report_type='employees') }}" class="nav-link">
+            🖨️ Працівники
+        </a>
+        <a href="{{ url_for('analytics.print_report', report_type='customers') }}" class="nav-link">
+            🖨️ Клієнти
+        </a>
+        <a href="{{ url_for('analytics.print_report', report_type='products') }}" class="nav-link">
+            🖨️ Товари
+        </a>
+        <a href="{{ url_for('analytics.print_report', report_type='checks') }}" class="nav-link">
+            🖨️ Чеки
+        </a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-name">{{ session.get('user_name', 'Гість') }}</div>
+        <div class="user-role">
+            {% if session.get('role') == 'Manager' %}
+                🛠️ Менеджер
+            {% elif session.get('role') == 'Cashier' %}
+                💼 Касир
+            {% endif %}
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger w-100">
+            Вийти із системи
+        </a>
+    </div>
+</div>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════════ -->
+<div class="main-content">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
