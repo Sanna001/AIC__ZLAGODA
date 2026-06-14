@@ -104,26 +104,39 @@ def _validate_employee_form(form):
         'salary': salary
     }
 
-
-# Вимога 1 (Manager): додати працівника
 @employees_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
 def add_employee():
     if request.method == 'POST':
+        # 1. Перевіряємо дані через вашу валідаційну функцію
         error, values = _validate_employee_form(request.form)
         if error:
             flash(error, "danger")
             return render_template('employees/add.html')
 
-        password_hash = generate_password_hash(request.form.get('password', ''))
-
+        # 2. З'єднуємось з БД
         conn = get_db_connection()
+        
+        # 3. ГЕНЕРАЦІЯ ID (Тут ми визначаємо новий ID)
+        last_empl = conn.execute("SELECT id_employee FROM Employee ORDER BY id_employee DESC LIMIT 1").fetchone()
+        
+        if last_empl:
+            # last_empl['id_employee'] це, наприклад, 'E102'. [1:] відрізає 'E' -> '102'
+            last_num = int(last_empl['id_employee'][1:]) 
+            new_id = f"E{last_num + 1}"
+        else:
+            new_id = "E100" # Якщо таблиця порожня
+
+        # 4. Вставка в базу
         try:
             conn.execute('''
-                INSERT INTO Employee VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO Employee (id_employee, empl_surname, empl_name, empl_patronymic, 
+                                      empl_role, salary, date_of_birth, date_of_start, 
+                                      phone_number, city, street, zip_code, password_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
-                request.form.get('id_employee'),
+                new_id, 
                 request.form.get('empl_surname'),
                 request.form.get('empl_name'),
                 request.form.get('empl_patronymic') or None,
@@ -135,12 +148,13 @@ def add_employee():
                 request.form.get('city'),
                 request.form.get('street'),
                 request.form.get('zip_code'),
-                password_hash
+                generate_password_hash(request.form.get('password'))
             ))
             conn.commit()
-            flash("Працівника успішно додано!", "success")
+            flash(f"Працівника успішно додано! Присвоєно ID: {new_id}", "success")
             return redirect(url_for('employees.list_employees'))
         except Exception as e:
+            conn.rollback()
             flash(f"Помилка: {str(e)}", "danger")
         finally:
             conn.close()

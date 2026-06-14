@@ -37,11 +37,12 @@ def manage_customers():
 
 
 # Вимога 1 (Manager) / Вимога 8 (Cashier): додати клієнта
+# Вимога 1 (Manager) / Вимога 8 (Cashier): додати клієнта
 @customer_card_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_customer():
     if request.method == 'POST':
-        card_number = request.form.get('card_number', '').strip()
+        # card_number більше не беремо з request.form!
         surname = request.form.get('cust_surname', '').strip()
         name = request.form.get('cust_name', '').strip()
         patronymic = request.form.get('cust_patronymic', '').strip() or None
@@ -51,7 +52,7 @@ def add_customer():
         zip_code = request.form.get('zip_code', '').strip() or None
         percent = request.form.get('percent', '0')
 
-        # Валідація (семантичні обмеження)
+        # Валідація
         if len(phone) > 13:
             flash("Номер телефону не може перевищувати 13 символів!", "danger")
             return render_template('customer/add_customer.html')
@@ -64,16 +65,26 @@ def add_customer():
             return render_template('customer/add_customer.html')
 
         conn = get_db_connection()
+        
+        # --- ЛОГІКА АВТОГЕНЕРАЦІЇ КАРТКИ ---
+        last_card = conn.execute("SELECT card_number FROM Customer_Card ORDER BY card_number DESC LIMIT 1").fetchone()
+        if last_card:
+            # CC100 -> беремо з 2-го символу (індекс 2)
+            last_num = int(last_card['card_number'][2:])
+            new_card_number = f"CC{last_num + 1}"
+        else:
+            new_card_number = "CC100"
+
         try:
             conn.execute('''
                 INSERT INTO Customer_Card
                     (card_number, cust_surname, cust_name, cust_patronymic,
                      phone_number, city, street, zip_code, percent)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (card_number, surname, name, patronymic,
+            ''', (new_card_number, surname, name, patronymic,
                   phone, city, street, zip_code, percent_val))
             conn.commit()
-            flash("Картку клієнта успішно створено!", "success")
+            flash(f"Картку клієнта успішно створено! Номер: {new_card_number}", "success")
             return redirect(url_for('customer_card.manage_customers'))
         except Exception as e:
             conn.rollback()
@@ -82,7 +93,6 @@ def add_customer():
             conn.close()
 
     return render_template('customer/add_customer.html')
-
 
 # Вимога 2 (Manager) / Вимога 8 (Cashier): редагувати клієнта
 @customer_card_bp.route('/edit/<card_id>', methods=['GET', 'POST'])

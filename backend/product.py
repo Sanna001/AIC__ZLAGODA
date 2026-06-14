@@ -40,20 +40,20 @@ def add_product():
     categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
 
     if request.method == 'POST':
-        id_prod = request.form.get('id_product', '').strip()
         cat_num = request.form.get('category_number', '').strip()
         name = request.form.get('product_name', '').strip()
         chars = request.form.get('characteristics', '').strip() or None
 
-        if not id_prod or not cat_num or not name:
+        if not cat_num or not name:
             flash("Заповніть усі обов'язкові поля!", "danger")
             conn.close()
             return render_template('product/add.html', categories=categories)
 
         try:
+            # SQL автоматично призначить ID, якщо ви вкажете тільки потрібні стовпці
             conn.execute(
-                'INSERT INTO Product (id_product, category_number, product_name, characteristics) VALUES (?, ?, ?, ?)',
-                (int(id_prod), int(cat_num), name, chars)
+                'INSERT INTO Product (category_number, product_name, characteristics) VALUES (?, ?, ?)',
+                (int(cat_num), name, chars)
             )
             conn.commit()
             flash("Товар успішно додано!", "success")

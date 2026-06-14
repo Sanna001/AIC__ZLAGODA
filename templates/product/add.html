@@ -10,10 +10,6 @@
         </div>
         <div class="card-body">
             <form method="POST" action="{{ url_for('product.add_product') }}">
-                <div class="mb-3">
-                    <label class="form-label">ID товару (число)</label>
-                    <input type="number" name="id_product" class="form-control" required placeholder="Наприклад: 1014">
-                </div>
                 
                 <div class="mb-3">
                     <label class="form-label">Категорія</label>
@@ -37,7 +33,7 @@
 
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('product.manage_products') }}" class="btn btn-secondary">Скасувати</a>
-                    <button type="submit" class="btn btn-success">✅ Зберегти товар</button>
+                    <button type="submit" class="btn btn-success">Зберегти товар</button>
                 </div>
             </form>
         </div>
