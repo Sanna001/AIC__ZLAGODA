@@ -146,35 +146,6 @@ def search_by_upc():
     return render_template('store_product/search_upc.html', product=product, upc=upc)
 
 
-# Додати товар у магазин
-@store_product_bp.route('/add', methods=['GET', 'POST'])
-@login_required
-@roles_required('Manager')
-def add_store_product():
-    conn = get_db_connection()
-    products = conn.execute('SELECT * FROM Product ORDER BY product_name').fetchall()
-    if request.method == 'POST':
-        try:
-            selling_price = float(request.form.get('selling_price', 0))
-            products_number = int(request.form.get('products_number', 0))
-            if selling_price < 0 or products_number < 0:
-                raise ValueError("Значення не можуть бути від'ємними")
-            
-            conn.execute('INSERT INTO Store_Product VALUES (?, ?, ?, ?, ?, ?)', (
-                request.form.get('UPC'), request.form.get('UPC_prom'),
-                request.form.get('id_product'), selling_price,
-                products_number, int(request.form.get('promotional_product', 0))
-            ))
-            conn.commit()
-            flash("Товар у магазині додано!", "success")
-            return redirect(url_for('store_product.list_store_products'))
-        except Exception as e:
-            flash(f"Помилка: {str(e)}", "danger")
-        finally:
-            conn.close()
-    conn.close()
-    return render_template('store_product/add.html', products=products)
-
 
 # Редагувати товар у магазині
 @store_product_bp.route('/edit/<upc>', methods=['GET', 'POST'])
@@ -243,26 +214,32 @@ def delete_store_product(upc):
 @roles_required('Manager')
 def add_store_product():
     conn = get_db_connection()
-    # Отримуємо тільки ті товари, які вже є в каталозі
     products = conn.execute('SELECT * FROM Product ORDER BY product_name').fetchall()
     
     if request.method == 'POST':
         try:
+            upc = request.form.get('UPC', '').strip() # Отримуємо UPC з форми
             id_product = request.form.get('id_product')
             selling_price = float(request.form.get('selling_price', 0))
             products_number = int(request.form.get('products_number', 0))
             
-            # ВАЛИДАЦІЯ: товар не може мати кількість 0 на полиці
+            # 1. Валідація кількості
             if products_number <= 0:
                 raise ValueError("Кількість товару на полиці має бути більшою за 0!")
             
-            # Перевірка: чи існує такий ID в таблиці Product
+            # 2. Перевірка: чи існує такий ID в таблиці Product
             exists = conn.execute('SELECT 1 FROM Product WHERE id_product = ?', (id_product,)).fetchone()
             if not exists:
                 raise ValueError("Вибраний товар не існує в основному каталозі!")
 
+            # 3. ДОДАЄМО ВАШУ ПЕРЕВІРКУ НА ДУБЛЮВАННЯ UPC
+            exists_upc = conn.execute('SELECT 1 FROM Store_Product WHERE UPC = ?', (upc,)).fetchone()
+            if exists_upc:
+                raise ValueError(f"Товар з UPC '{upc}' вже існує на полиці!")
+
+            # 4. Вставка даних
             conn.execute('INSERT INTO Store_Product (UPC, id_product, selling_price, products_number, promotional_product) VALUES (?, ?, ?, ?, ?)', 
-                         (request.form.get('UPC'), id_product, selling_price, products_number, int(request.form.get('promotional_product', 0))))
+                         (upc, id_product, selling_price, products_number, int(request.form.get('promotional_product', 0))))
             
             conn.commit()
             flash("Товар успішно виставлено на полицю!", "success")

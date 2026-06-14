@@ -34,32 +34,34 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for sp in store_products %}
-                    <tr>
-                        <td><code>{{ sp.UPC }}</code></td>
-                        <td><strong>{{ sp.product_name }}</strong></td>
-                        <td>{{ sp.selling_price }} грн</td>
-                        <td>
-                            {% if sp.products_number < 10 %}
-                            <span class="badge bg-danger">{{ sp.products_number }} шт (Мало!)</span>
-                            {% else %}
-                            <span class="badge bg-success">{{ sp.products_number }} шт</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if sp.promotional_product == 1 %}
-                            <span class="badge bg-warning text-dark">🔥 Акційний</span>
-                            {% else %}
-                            <span class="badge bg-secondary">Звичайний</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center text-muted py-4">На полицях магазину пусто.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+    {% for sp in store_products %}
+    <tr>
+        <td><code>{{ sp.UPC }}</code></td>
+        <td><strong>{{ sp.product_name }}</strong></td>
+        <td>{{ sp.selling_price }} грн</td>
+        <td>
+            {% if sp.products_number < 10 %}
+            <span class="badge bg-danger">{{ sp.products_number }} шт (Мало!)</span>
+            {% else %}
+            <span class="badge bg-success">{{ sp.products_number }} шт</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if sp.promotional_product == 1 %}
+            <span class="badge bg-warning text-dark">🔥 Акційний</span>
+            {% else %}
+            <span class="badge bg-secondary">Звичайний</span>
+            {% endif %}
+        </td>
+        
+    
+        </tr>
+    {% else %}
+    <tr>
+        <td colspan="6" class="text-center text-muted py-4">На полицях магазину пусто.</td>
+    </tr>
+    {% endfor %}
+</tbody>
             </table>
         </div>
     </div>

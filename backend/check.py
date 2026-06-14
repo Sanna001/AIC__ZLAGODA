@@ -93,6 +93,7 @@ def create_check():
                     "UPDATE Store_Product SET products_number = products_number - ? WHERE UPC = ?",
                     (qty, upc)
                 )
+                cursor.execute('DELETE FROM Store_Product WHERE products_number <= 0')
 
             conn.commit()
             flash(f"Чек {check_number} успішно створено! Сума: {total_sum} грн.", "success")

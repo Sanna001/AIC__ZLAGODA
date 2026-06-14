@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Додати товар на полицю | АІС Злагода{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">➕ Виставити новий товар на полицю</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            
+            <div class="mb-3">
+                <label class="form-label">UPC код (штрих-код)</label>
+                <input type="text" name="UPC" class="form-control" required placeholder="Наприклад: UPC0004">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Товар з каталогу</label>
+                <select name="id_product" class="form-select" required>
+                    <option value="" disabled selected>Оберіть товар...</option>
+                    {% for p in products %}
+                        <option value="{{ p.id_product }}">{{ p.product_name }} (ID: {{ p.id_product }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Ціна продажу (грн)</label>
+                    <input type="number" step="0.01" name="selling_price" class="form-control" required min="0">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Кількість (шт)</label>
+                    <input type="number" name="products_number" class="form-control" required min="1">
+                </div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="promotional_product" value="1" class="form-check-input" id="isPromo">
+                <label class="form-check-label" for="isPromo">Акційний товар</label>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-secondary">Назад</a>
+                <button type="submit" class="btn btn-success">Зберегти</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
