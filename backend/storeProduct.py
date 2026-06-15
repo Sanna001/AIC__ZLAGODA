@@ -125,27 +125,33 @@ def _promo_view(is_promo):
 
 
 # Пошук за UPC
-@store_product_bp.route('/search_upc')
+@store_product_bp.route('/search_upc', methods=['GET'])
 @login_required
 @roles_required('Manager', 'Cashier')
 def search_by_upc():
+    # Отримуємо код UPC з параметрів GET-запиту форми
     upc = request.args.get('upc', '').strip()
     product = None
+
     if upc:
         conn = get_db_connection()
-        product = conn.execute('''
-            SELECT sp.UPC, p.product_name, p.characteristics,
-                   sp.selling_price, sp.products_number, sp.promotional_product
-            FROM Store_Product sp
-            JOIN Product p ON sp.id_product = p.id_product
-            WHERE sp.UPC = ?
-        ''', (upc,)).fetchone()
-        conn.close()
-        if not product:
-            flash(f"Товар з UPC '{upc}' не знайдено!", "warning")
-    return render_template('store_product/search_upc.html', product=product, upc=upc)
+        try:
+            # Запит шукає товар на полиці (Store_Product) та підтягує його назву й характеристики з таблиці Product
+            query = '''
+                SELECT sp.UPC, sp.selling_price, sp.products_number, sp.promotional_product,
+                       p.product_name, p.characteristics
+                FROM Store_Product sp
+                JOIN Product p ON sp.id_product = p.id_product
+                WHERE sp.UPC = ?
+            '''
+            product = conn.execute(query, (upc,)).fetchone()
+        except Exception as e:
+            flash(f"Database error: {str(e)}", "danger")
+        finally:
+            conn.close()
 
-
+    # Повертаємо шаблон. Зверніть увагу на назву вашого файлу: 'sesrch_upc.html' (з помилкою в імені)
+    return render_template('store_product/sesrch_upc.html', product=product, upc=upc)
 
 # Редагувати товар у магазині
 @store_product_bp.route('/edit/<upc>', methods=['GET', 'POST'])
@@ -168,6 +174,11 @@ def edit_store_product(upc):
             is_promo = int(request.form.get('promotional_product', 0))
             new_upc_prom = request.form.get('UPC_prom') or None
             
+            # --- ЛОГІКА АКЦІЇ ПРИ РЕДАГУВАННІ ---
+            # Якщо менеджер вказав, що цей товар є акційним, автоматично застосовуємо знижку 20%
+            if is_promo == 1:
+                selling_price = round(selling_price * 0.8, 2)
+
             cursor = conn.cursor()
             cursor.execute('''
                 UPDATE Store_Product SET UPC_prom = ?, id_product = ?, selling_price = ?,
@@ -209,6 +220,7 @@ def delete_store_product(upc):
     return redirect(url_for('store_product.list_store_products'))
 
 
+# Додавання товару на полицю
 @store_product_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -216,12 +228,26 @@ def add_store_product():
     conn = get_db_connection()
     products = conn.execute('SELECT * FROM Product ORDER BY product_name').fetchall()
     
+    last_product = conn.execute("SELECT UPC FROM Store_Product ORDER BY UPC DESC LIMIT 1").fetchone()
+    # Припускаємо, що формат UPC: 'UPC' + 4 цифри (наприклад, UPC0005)
+    if last_product:
+        last_num = int(last_product['UPC'][3:])
+        new_upc = f"UPC{last_num + 1:04d}"
+    else:
+        new_upc = "UPC0001"
+
     if request.method == 'POST':
         try:
-            upc = request.form.get('UPC', '').strip() # Отримуємо UPC з форми
+            upc = request.form.get('UPC', '').strip() 
             id_product = request.form.get('id_product')
             selling_price = float(request.form.get('selling_price', 0))
             products_number = int(request.form.get('products_number', 0))
+            is_promo = int(request.form.get('promotional_product', 0))
+            
+            # --- ЛОГІКА АКЦІЇ ПРИ ДОДАВАННІ ---
+            # Якщо товар додається як акційний, автоматично рахуємо ціну зі знижкою 20%
+            if is_promo == 1:
+                selling_price = round(selling_price * 0.8, 2)
             
             # 1. Валідація кількості
             if products_number <= 0:
@@ -232,14 +258,16 @@ def add_store_product():
             if not exists:
                 raise ValueError("Вибраний товар не існує в основному каталозі!")
 
-            # 3. ДОДАЄМО ВАШУ ПЕРЕВІРКУ НА ДУБЛЮВАННЯ UPC
+            # 3. Перевірка на дублювання UPC
             exists_upc = conn.execute('SELECT 1 FROM Store_Product WHERE UPC = ?', (upc,)).fetchone()
             if exists_upc:
                 raise ValueError(f"Товар з UPC '{upc}' вже існує на полиці!")
 
-            # 4. Вставка даних
-            conn.execute('INSERT INTO Store_Product (UPC, id_product, selling_price, products_number, promotional_product) VALUES (?, ?, ?, ?, ?)', 
-                         (upc, id_product, selling_price, products_number, int(request.form.get('promotional_product', 0))))
+            # 4. Вставка даних (з уже скоригованою ціною)
+            conn.execute('''
+                INSERT INTO Store_Product (UPC, id_product, selling_price, products_number, promotional_product) 
+                VALUES (?, ?, ?, ?, ?)
+            ''', (upc, id_product, selling_price, products_number, is_promo))
             
             conn.commit()
             flash("Товар успішно виставлено на полицю!", "success")
@@ -249,4 +277,4 @@ def add_store_product():
         finally:
             conn.close()
             
-    return render_template('store_product/add.html', products=products)
+    return render_template('store_product/add.html', products=products, new_upc=new_upc)

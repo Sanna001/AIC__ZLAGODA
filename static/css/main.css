@@ -1,16 +1,39 @@
-
-        :root {
-            --sidebar-bg: #1e293b;
-            --sidebar-hover: #334155;
-            --sidebar-text: #cbd5e1;
-            --accent: #22c55e;
+:root {
+            --sidebar-bg: hsl(45, 50%, 97%);
+            --sidebar-hover: #eff9ef;
+            --sidebar-text: #08260b;
+            
+            /* Нові роздільні змінні кольорів */
+            --logo-color: #08260b;        /* Колір суто для напису ZLAGODA */
+            --button-bg: #4d694e;         /* Базовий колір кнопок (можеш змінити на будь-який) */
+            --button-hover: #3d543e;      /* Колір кнопок при наведенні */
         }
 
         body {
             display: flex;
             min-height: 100vh;
-            background-color: #f1f5f9;
+            background: linear-gradient(220deg, #4d694e 0%, #fff3d5 100%);
             font-family: 'Segoe UI', sans-serif;
+            position: relative;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(40px); 
+            -webkit-backdrop-filter: blur(50px);
+            background-color: rgba(255, 255, 255, 0.62); 
+            z-index: 0; 
+            pointer-events: none;
+        }
+
+        .sidebar, .main-content {
+            position: relative;
+            z-index: 1;
         }
 
         /* ── Sidebar ── */
@@ -27,20 +50,20 @@
 
         .sidebar-header {
             padding: 20px 16px;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid #08260b;
             text-align: center;
         }
 
         .sidebar-header h1 {
             font-size: 1.2rem;
             font-weight: 700;
-            color: var(--accent);
+            color: var(--logo-color); /* Тепер колір логотипу незалежний */
             margin: 0;
             letter-spacing: 0.5px;
         }
 
         .sidebar-header small {
-            color: #64748b;
+            color: #9ea29f;
             font-size: 0.75rem;
         }
 
@@ -55,7 +78,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #475569;
+            color: #9ea29f; /* Покращено читабельність тексту на зеленому фоні */
             padding: 16px 12px 6px;
         }
 
@@ -73,23 +96,23 @@
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             background-color: var(--sidebar-hover);
-            color: white;
+            color: #095610;
         }
 
         .sidebar-footer {
             padding: 16px;
-            border-top: 1px solid #334155;
+            border-top: 1px solid #08260b;
         }
 
         .sidebar-footer .user-name {
             font-weight: 600;
-            color: #f8fafc;
+            color: #08260b;
             font-size: 0.9rem;
         }
 
         .sidebar-footer .user-role {
             font-size: 0.75rem;
-            color: #64748b;
+            color: #9ea29f;
             margin-bottom: 10px;
         }
 
@@ -128,7 +151,7 @@
         .card {
             border: none;
             border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Легка тінь для об'єму карток */
         }
 
         .card-header {
@@ -140,14 +163,14 @@
 
         /* ── Buttons ── */
         .btn-primary {
-            background-color: var(--accent);
-            border-color: var(--accent);
+            background-color: var(--button-bg); /* Кнопки тепер мають власний незалежний колір */
+            border-color: var(--button-bg);
             color: white;
         }
 
         .btn-primary:hover {
-            background-color: #16a34a;
-            border-color: #16a34a;
+            background-color: var(--button-hover);
+            border-color: var(--button-hover);
         }
 
         /* ── Page title ── */
@@ -157,4 +180,3 @@
             color: #0f172a;
             margin-bottom: 20px;
         }
-  

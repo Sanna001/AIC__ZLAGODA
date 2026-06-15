@@ -6,14 +6,14 @@
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-warning text-dark">
-            <h4 class="mb-0">✏️ Редагування даних клієнта</h4>
+            <h4 class="mb-0">Редагування даних клієнта</h4>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('customer_card.edit_customer', card_number=customer.card_number) }}">
+           <form method="POST" action="{{ url_for('customer_card.edit_customer', card_id=customer.card_number) }}">
+                
                 <div class="mb-3">
                     <label class="form-label">Номер картки (не редагується)</label>
                     <input type="text" class="form-control" value="{{ customer.card_number }}" disabled>
-                    <input type="hidden" name="card_number" value="{{ customer.card_number }}">
                 </div>
                 
                 <div class="row">
@@ -39,7 +39,7 @@
 
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('customer_card.manage_customers') }}" class="btn btn-secondary">Скасувати</a>
-                    <button type="submit" class="btn btn-warning">💾 Зберегти зміни</button>
+                    <button type="submit" class="btn btn-warning">Зберегти зміни</button>
                 </div>
             </form>
         </div>

@@ -1,65 +1,143 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Звіт — АІС Злагода</title>
+    <title>Report </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { padding: 30px; background: white; color: black; }
-        @media print {
-            .no-print { display: none; }
-            body { padding: 0; }
-        }
+        @media print { .no-print { display: none; } body { padding: 0; } }
     </style>
 </head>
 <body>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-        <span class="text-muted">Передперегляд звіту</span>
-        <button onclick="window.print();" class="btn btn-primary">Надрукувати (Ctrl + P)</button>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <span class="text-muted">Report Preview</span>
+    <button onclick="window.print();" class="btn btn-primary">Print (Ctrl + P)</button>
+</div>
 
-    <div class="text-center mb-5">
-        <h2>Фіскальний звіт супермаркету «ЗЛАГОДА»</h2>
-        <p class="text-muted">Тип звіту: <strong>{{ report_type }}</strong> | Дата формування: {{ current_date }}</p>
-    </div>
+<div class="text-center mb-4">
+    <h2>Fiscal Report "ZLAGODA"</h2>
+    <p class="text-muted">
+        {% if report_type == 'employees' %}Employees
+        {% elif report_type == 'customers' %}Customers
+        {% elif report_type == 'categories' %}Categories
+        {% elif report_type == 'products' %}Product Catalog
+        {% elif report_type == 'store_products' %}Products in Store
+        {% elif report_type == 'checks' %}Checks
+        {% endif %}
+    </p>
+    <p class="text-muted small">Generated on: <strong>{{ now if now else '' }}</strong></p>
+</div>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                {% if report_type == 'employees' %}
-                    <th>ID</th><th>ПІБ</th><th>Роль</th><th>Зарплата</th>
-                {% elif report_type == 'customers' %}
-                    <th>Картка</th><th>Покупець</th><th>Знижка</th>
-                {% elif report_type == 'checks' %}
-                    <th>Номер чека</th><th>Касир ID</th><th>Дата</th><th>Сума</th>
-                {% endif %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in data %}
-            <tr>
-                {% if report_type == 'employees' %}
-                    <td>{{ item.id_employee }}</td><td>{{ item.empl_surname }} {{ item.empl_name }}</td><td>{{ item.role }}</td><td>{{ item.salary }} грн</td>
-                {% elif report_type == 'customers' %}
-                    <td>{{ item.card_number }}</td><td>{{ item.cust_surname }} {{ item.cust_name }}</td><td>{{ item.percent }}%</td>
-                {% elif report_type == 'checks' %}
-                    <td>{{ item.check_number }}</td><td>{{ item.id_employee }}</td><td>{{ item.print_date }}</td><td>{{ item.sum_total }} грн</td>
-                {% endif %}
-            </tr>
+<table class="table table-bordered table-sm">
+<thead class="table-dark">
+<tr>
+    {% if report_type == 'employees' %}
+        <th>ID</th><th>Surname</th><th>Name</th><th>Patronymic</th>
+        <th>Role</th><th>Salary</th><th>Date of Birth</th>
+        <th>Hire Date</th><th>Phone</th><th>City</th><th>Street</th>
+
+    {% elif report_type == 'customers' %}
+        <th>Card #</th><th>Surname</th><th>Name</th><th>Patronymic</th>
+        <th>Phone</th><th>City</th><th>Street</th><th>Zip Code</th><th>Discount %</th>
+
+    {% elif report_type == 'categories' %}
+        <th>Category ID</th><th>Category Name</th>
+
+    {% elif report_type == 'products' %}
+        <th>Product ID</th><th>Product Name</th><th>Category</th><th>Characteristics</th>
+
+    {% elif report_type == 'store_products' %}
+        <th>UPC</th><th>Product Name</th><th>Selling Price</th>
+        <th>Quantity</th><th>Type</th>
+
+    {% elif report_type == 'checks' %}
+        <th>Check #</th><th>Cashier</th><th>Date</th><th>Total</th><th>VAT</th>
+    {% endif %}
+</tr>
+</thead>
+<tbody>
+{% for item in data %}
+<tr>
+    {% if report_type == 'employees' %}
+        <td><code>{{ item.id_employee }}</code></td>
+        <td>{{ item.empl_surname }}</td>
+        <td>{{ item.empl_name }}</td>
+        <td>{{ item.empl_patronymic or '—' }}</td>
+        <td>
+            {% if item.empl_role == 'Manager' %}
+                <span style="color:red">Manager</span>
             {% else %}
-            <tr>
-                <td colspan="4" class="text-center">Дані для звіту відсутні або не знайдені за вказаними фільтрами.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                Cashier
+            {% endif %}
+        </td>
+        <td>{{ item.salary }} UAH</td>
+        <td>{{ item.date_of_birth }}</td>
+        <td>{{ item.date_of_start }}</td>
+        <td>{{ item.phone_number }}</td>
+        <td>{{ item.city }}</td>
+        <td>{{ item.street }}</td>
 
-    <script>
-        // Автоматично відкривати вікно друку при завантаженні сторінки
-        window.onload = function() {
-            setTimeout(window.print, 500);
-        }
-    </script>
+    {% elif report_type == 'customers' %}
+        <td><code>{{ item.card_number }}</code></td>
+        <td>{{ item.cust_surname }}</td>
+        <td>{{ item.cust_name }}</td>
+        <td>{{ item.cust_patronymic or '—' }}</td>
+        <td>{{ item.phone_number }}</td>
+        <td>{{ item.city or '—' }}</td>
+        <td>{{ item.street or '—' }}</td>
+        <td>{{ item.zip_code or '—' }}</td>
+        <td><strong>{{ item.percent }}%</strong></td>
+
+    {% elif report_type == 'categories' %}
+        <td>{{ item.category_number }}</td>
+        <td>{{ item.category_name }}</td>
+
+    {% elif report_type == 'products' %}
+        <td><code>{{ item.id_product }}</code></td>
+        <td><strong>{{ item.product_name }}</strong></td>
+        <td>{{ item.category_name }}</td>
+        <td>{{ item.characteristics or '—' }}</td>
+
+    {% elif report_type == 'store_products' %}
+        <td><code>{{ item.UPC }}</code></td>
+        <td><strong>{{ item.product_name }}</strong></td>
+        <td>{{ item.selling_price }} UAH</td>
+        <td>{{ item.products_number }} units</td>
+        <td>{% if item.promotional_product == 1 %}Promotional{% else %}Regular{% endif %}</td>
+
+    {% elif report_type == 'checks' %}
+        <td><code>{{ item.check_number }}</code></td>
+        <td>{{ item.empl_surname }}</td>
+        <td>{{ item.print_date }}</td>
+        <td>{{ item.sum_total }} UAH</td>
+        <td>{{ item.vat }} UAH</td>
+    {% endif %}
+</tr>
+{% else %}
+<tr>
+    <td colspan="10" class="text-center text-muted py-3">No data found.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% if report_type in ['store_products', 'checks'] %}
+<div class="mt-3">
+    {% if report_type == 'store_products' %}
+        <strong>Total items:</strong> {{ data|length }}
+    {% elif report_type == 'checks' %}
+        {% set total = namespace(sum=0) %}
+        {% for item in data %}{% set total.sum = total.sum + item.sum_total %}{% endfor %}
+        <strong>Total checks:</strong> {{ data|length }} &nbsp;|&nbsp;
+        <strong>Total amount:</strong> {{ "%.2f"|format(total.sum) }} UAH
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+window.onload = function() { setTimeout(window.print, 500); }
+</script>
 </body>
 </html>

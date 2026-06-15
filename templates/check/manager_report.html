@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="no-print mb-3">
+    <button onclick="window.print()" class="btn btn-primary">Print Report</button>
+    <a href="{{ url_for('check.list_checks') }}" class="btn btn-secondary">Back</a>
+</div>
+
+<h2>Check Report ({{ date_from }} — {{ date_to }})</h2>
+<h3>Total Revenue: {{ "%.2f"|format(total_revenue) }} UAH</h3>
+
+{% for entry in report_data %}
+<div class="card mb-3">
+    <div class="card-header">Check #{{ entry.check.check_number }} | Cashier: {{ entry.check.empl_surname }}</div>
+    <div class="card-body">
+        <table class="table table-sm">
+            <thead><tr><th>Product</th><th>Quantity</th><th>Price</th></tr></thead>
+            <tbody>
+            {% for item in entry.products %}
+            <tr>
+                <td>{{ item.product_name }}</td>
+                <td>{{ item.product_number }}</td>
+                <td>{{ "%.2f"|format(item.selling_price) }} UAH</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <strong>Total for Check: {{ "%.2f"|format(entry.check.sum_total) }} UAH</strong>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

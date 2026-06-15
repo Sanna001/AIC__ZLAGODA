@@ -1,5 +1,7 @@
 import sys
 import os
+from datetime import date  # ← ДОДАЙ
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
 
 from flask import Flask, redirect, url_for, session
@@ -18,11 +20,15 @@ app.secret_key = 'zlagoda_secret_key_2026'
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(employees_bp)
 app.register_blueprint(category_bp)
-app.register_blueprint(product_bp)
+app.register_blueprint(product_bp, url_prefix='/products')
 app.register_blueprint(store_product_bp)
 app.register_blueprint(customer_card_bp)
 app.register_blueprint(check_bp)
 app.register_blueprint(analytics_bp)
+
+@app.context_processor          # ← ДОДАЙ ЦЕЙ БЛОК
+def inject_today():
+    return {'today': date.today().strftime('%Y-%m-%d')}
 
 @app.route('/')
 def index():

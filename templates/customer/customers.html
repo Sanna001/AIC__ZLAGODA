@@ -1,48 +1,66 @@
 {% extends 'base.html' %}
 
-{% block title %}Клієнти | АІС Злагода{% endblock %}
+{% block title %}Customers{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="page-title m-0">💳 Дисконтні картки клієнтів</h1>
+    <h1 class="page-title m-0">Customer Discount Cards</h1>
+    {% if session.get('role') in ('Manager', 'Cashier') %}
     <a href="{{ url_for('customer_card.add_customer') }}" class="btn btn-primary">
-        ➕ Новий клієнт
+        Add New Customer
     </a>
+    {% endif %}
 </div>
 
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="{{ url_for('customer_card.manage_customers') }}" class="row g-3">
             <div class="col-md-5">
-                <input type="text" name="search_surname" class="form-control" placeholder="Пошук за прізвищем..." value="{{ request.args.get('search_surname', '') }}">
+                <input type="text" name="search_surname" class="form-control"
+                       placeholder="Search by surname..."
+                       value="{{ search_surname }}">
             </div>
+            {% if session.get('role') == 'Manager' %}
             <div class="col-md-4">
-                <input type="number" name="percent" class="form-control" placeholder="Знижка (%)" value="{{ request.args.get('percent', '') }}">
+                <input type="number" name="percent" class="form-control"
+                       placeholder="Discount (%)"
+                       value="{{ percent }}">
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100">🔍 Знайти</button>
+                <button type="submit" class="btn btn-primary w-100">Search</button>
             </div>
+            {% else %}
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+            {% endif %}
         </form>
     </div>
 </div>
 
-<div class=\"mt-3\">
-    <a href=\"{{ url_for('analytics.print_report', report_type='customers', search_surname=request.args.get('search_surname', ''), percent=request.args.get('percent', '')) }}\" target=\"_blank\" class=\"btn btn-outline-secondary\">
-        🖨️ Надрукувати звіт по клієнтах
+{% if session.get('role') == 'Manager' %}
+<div class="mt-3 mb-3">
+    <a href="{{ url_for('analytics.print_report', report_type='customers', search_surname=search_surname, percent=percent) }}"
+       target="_blank" class="btn btn-outline-secondary">
+        Print Customer Report
     </a>
 </div>
+{% endif %}
 
 <div class="card">
-    <div class="card-header">Зареєстровані постійні покупці</div>
+    <div class="card-header">Registered Regular Customers</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>Номер картки</th>
-                        <th>Прізвище та Ім'я</th>
-                        <th>Телефон</th>
-                        <th>Знижка</th>
+                        <th>Card Number</th>
+                        <th>Surname and Name</th>
+                        <th>Phone</th>
+                        <th>Discount</th>
+                        {% if session.get('role') in ('Manager', 'Cashier') %}
+                        <th>Actions</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -52,10 +70,26 @@
                         <td><strong>{{ card.cust_surname }} {{ card.cust_name }}</strong></td>
                         <td>{{ card.phone_number or '-' }}</td>
                         <td><span class="badge bg-success">{{ card.percent }}%</span></td>
+                        {% if session.get('role') in ('Manager', 'Cashier') %}
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('customer_card.edit_customer', card_id=card.card_number) }}"
+                                   class="btn btn-sm btn-outline-primary">Edit</a>
+                                {% if session.get('role') == 'Manager' %}
+                                <form method="POST"
+                                      action="{{ url_for('customer_card.delete_customer', card_id=card.card_number) }}"
+                                      onsubmit="return confirm('Delete card for {{ card.cust_surname }}?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">Жодної картки не знайдено.</td>
+                        <td colspan="{% if session.get('role') in ('Manager', 'Cashier') %}5{% else %}4{% endif %}"
+                            class="text-center text-muted py-4">No cards found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

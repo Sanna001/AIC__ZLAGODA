@@ -124,12 +124,28 @@ def print_report(report_type):
         data = conn.execute('SELECT * FROM Customer_Card ORDER BY cust_surname').fetchall()
     elif report_type == 'categories':
         data = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
-    elif report_type == 'products':
-        data = conn.execute('''
+    if report_type == 'products':
+        # Зчитуємо фільтри з URL
+        search_name = request.args.get('search_name', '').strip()
+        category_id = request.args.get('category_id', '')
+
+        query = '''
             SELECT p.*, c.category_name FROM Product p
             JOIN Category c ON p.category_number = c.category_number
-            ORDER BY p.product_name
-        ''').fetchall()
+            WHERE 1=1
+        '''
+        params = []
+
+        if category_id:
+            query += " AND p.category_number = ?"
+            params.append(category_id)
+        
+        if search_name:
+            query += " AND LOWER(p.product_name) LIKE LOWER(?)"
+            params.append(f'%{search_name}%')
+
+        query += " ORDER BY p.product_name"
+        data = conn.execute(query, params).fetchall()
     elif report_type == 'store_products':
         data = conn.execute('''
             SELECT sp.*, p.product_name FROM Store_Product sp

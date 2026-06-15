@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Check | AIS Zlagoda{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title m-0">Create New Check</h1>
+        <a href="{{ url_for('check.list_checks') }}" class="btn btn-outline-secondary">
+            Back to Archive
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Check parameters</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('check.create_check') }}" method="POST" id="checkForm">
+                        
+                        <div class="mb-4">
+                            <label for="card_number" class="form-label fw-bold">Customer Discount Card (Optional)</label>
+                            <select name="card_number" id="card_number" class="form-select">
+                                <option value="">No discount card</option>
+                                {% for card in cards %}
+                                    <option value="{{ card.card_number }}">
+                                        {{ card.card_number }} - {{ card.cust_surname }} {{ card.cust_name }} ({{ card.percent }}%)
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">If a card is selected, the customer's personal discount will be applied to the check total.</div>
+                        </div>
+
+                        <h5 class="border-bottom pb-2 mb-3">Items in Check</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle" id="selectedProductsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product (UPC)</th>
+                                        <th style="width: 120px;" class="text-center">Quantity</th>
+                                        <th style="width: 100px;" class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="checkItemsContainer">
+                                    <tr id="emptyRow">
+                                        <td colspan="3" class="text-center text-muted py-4">
+                                            Please select and add products from the list on the right.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 pt-2 border-top text-end">
+                            <button type="submit" class="btn btn-success btn-lg px-5" id="submitCheckBtn" disabled>
+                                Save Check
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">Available Products</h5>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    <div class="list-group">
+                        {% for sp in store_products %}
+                            <div class="list-group-item list-group-item-action p-3 mb-2 border rounded">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h6 class="mb-1 text-primary fw-bold">{{ sp.product_name }}</h6>
+                                    <span class="badge bg-info text-dark">{{ sp.selling_price }} UAH</span>
+                                </div>
+                                <p class="mb-1 text-muted small">
+                                    <strong>UPC:</strong> <code>{{ sp.UPC }}</code><br>
+                                    <strong>In Stock:</strong> {{ sp.products_number }} units.
+                                    {% if sp.promotional_product == 1 %}
+                                        <span class="badge bg-danger ms-1 text-white">Promotion</span>
+                                    {% endif %}
+                                </p>
+                                <div class="input-group input-group-sm mt-2">
+                                    <input type="number" id="qty_{{ sp.UPC }}" class="form-control" value="1" min="1" max="{{ sp.products_number }}">
+                                    <button type="button" class="btn btn-primary" 
+                                            onclick="handleAdd(this)" 
+                                            data-upc="{{ sp.UPC }}" 
+                                            data-name="{{ sp.product_name|escape }}" 
+                                            data-price="{{ sp.selling_price }}" 
+                                            data-max="{{ sp.products_number }}">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">No products available in stock.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handleAdd(btn) {
+    const upc = btn.getAttribute('data-upc');
+    const name = btn.getAttribute('data-name');
+    const price = parseFloat(btn.getAttribute('data-price'));
+    const maxQty = parseInt(btn.getAttribute('data-max'));
+    
+    addProductToCheck(upc, name, price, maxQty);
+}
+
+function addProductToCheck(upc, name, price, maxQty) {
+    const qtyInput = document.getElementById('qty_' + upc);
+    const qty = parseInt(qtyInput.value);
+    
+    if (qty > maxQty) {
+        alert("Not enough items in stock!");
+        return;
+    }
+
+    const container = document.getElementById('checkItemsContainer');
+    const emptyRow = document.getElementById('emptyRow');
+    if (emptyRow) emptyRow.remove();
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${name} <small class="text-muted">(UPC: ${upc})</small>
+            <input type="hidden" name="items" value="${upc}:${qty}">
+        </td>
+        <td class="text-center">${qty}</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.parentElement.remove()">Remove</button>
+        </td>
+    `;
+    container.appendChild(row);
+
+    document.getElementById('submitCheckBtn').disabled = false;
+}
+</script>
+{% endblock %}

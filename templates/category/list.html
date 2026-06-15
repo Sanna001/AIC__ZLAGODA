@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="d-flex justify-content-between mb-4">
-    <h1 class="page-title">🗂️ Категорії товарів</h1>
-    <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">➕ Додати категорію</a>
+    <h1 class="page-title">Product Categories</h1>
+    <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">Add Category</a>
 </div>
 
 <div class="card">
@@ -10,8 +10,8 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th>Назва категорії</th>
-                    <th class="text-end">Дії</th>
+                    <th>Category Name</th>
+                    <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -25,8 +25,8 @@
                     <td class="text-end">
                         <form action="{{ url_for('category.delete_category', category_number=cat.category_number) }}" 
                               method="POST" 
-                              onsubmit="return confirm('УВАГА: Це видалить категорію та ВСІ товари в ній. Продовжити?');">
-                            <button type="submit" class="btn btn-outline-danger btn-sm">Видалити категорію</button>
+                              onsubmit="return confirm('WARNING: This will delete the category and ALL products within it. Continue?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete Category</button>
                         </form>
                     </td>
                 </tr>

@@ -3,114 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}АІС Злагода{% endblock %}</title>
+    <title>{% block title %}ZLAGODA{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
 
-<!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
 <div class="sidebar">
     <div class="sidebar-header">
-        <h1>🛒 АІС ЗЛАГОДА</h1>
-        <small>Інформаційна система</small>
+        <h1>ZLAGODA</h1>
+        <small>Dashboard</small>
     </div>
 
     <nav>
-        <!-- Загальне (для всіх) -->
-        <div class="nav-section-label">Загальне</div>
+        <div class="nav-section-label">Universal</div>
         <a href="{{ url_for('auth.dashboard') }}" class="nav-link">
-            🏠 Головна панель
-        </a>
-        <a href="{{ url_for('employees.profile') }}" class="nav-link">
-            👤 Мій профіль
+            Main page
         </a>
 
-        <!-- Товари (для всіх) -->
-        <div class="nav-section-label">Товари</div>
+        {% if session.get('user_id') %}
+        <a href="{{ url_for('employees.profile') }}" class="nav-link">
+            My Profile
+        </a>
+        {% endif %}
+        <div class="nav-section-label">Products</div>
         <a href="{{ url_for('product.manage_products') }}" class="nav-link">
-            📋 Каталог товарів
+            Product catalog
         </a>
         <a href="{{ url_for('store_product.list_store_products') }}" class="nav-link">
-            🏪 Товари в магазині
+            Products in the store
         </a>
-        <a href="{{ url_for('store_product.view_promotional') }}" class="nav-link">
-            🏷️ Акційні товари
-        </a>
-        <a href="{{ url_for('store_product.search_by_upc') }}" class="nav-link">
-            🔍 Пошук за UPC
+        <a href="{{ url_for('store_product.list_store_products', promo='1') }}" class="nav-link">
+            Promotional products
         </a>
         <a href="{{ url_for('customer_card.manage_customers') }}" class="nav-link">
-            💳 Клієнти
+            Clients
+        </a>
+
+        <div class="nav-section-label">Billing</div>
+        <a href="{{ url_for('check.list_checks') }}" class="nav-link">
+            Archive of checks
         </a>
 
         {% if session.get('role') == 'Cashier' %}
-        <!-- Панель касира -->
-        <div class="nav-section-label">Робоче місце касира</div>
+        <div class="nav-section-label">Cashier workplace</div>
         <a href="{{ url_for('check.create_check') }}" class="nav-link">
-            🧾 Створити чек
+            Create check
         </a>
-        <a href="{{ url_for('check.my_checks_today') }}" class="nav-link">
-            📅 Чеки за сьогодні
+        <a href="{{ url_for('check.list_checks') }}" class="nav-link">
+            My checks
         </a>
-        <a href="{{ url_for('check.my_checks') }}" class="nav-link">
-            📆 Чеки за період
+        <a href="{{ url_for('check.generate_report', date_from=today, date_to=today) }}" target="_blank" class="nav-link">
+            Today report (Print)
+        </a>
+        <a href="{{ url_for('store_product.search_by_upc') }}" class="nav-link">
+            Search by UPC
         </a>
         {% endif %}
 
         {% if session.get('role') == 'Manager' %}
-        <!-- Панель менеджера -->
-        <div class="nav-section-label">Управління</div>
+        <div class="nav-section-label">Management</div>
         <a href="{{ url_for('employees.list_employees') }}" class="nav-link">
-            👥 Працівники
+            Staff
         </a>
         <a href="{{ url_for('category.list_categories') }}" class="nav-link">
-            🗂️ Категорії
+            Categories
         </a>
-
-        <div class="nav-section-label">Аналітика</div>
-        <a href="{{ url_for('analytics.financial_report') }}" class="nav-link">
-            📊 Звіт по чеках
+        <a href="{{ url_for('check.cashier_sales_report') }}" class="nav-link">
+            Cashier sales report
         </a>
-        <a href="{{ url_for('analytics.product_sales_volume') }}" class="nav-link">
-            📈 Продажі товару
-        </a>
-
-        <div class="nav-section-label">Звіти для друку</div>
-        <a href="{{ url_for('analytics.print_report', report_type='employees') }}" class="nav-link">
-            🖨️ Працівники
-        </a>
-        <a href="{{ url_for('analytics.print_report', report_type='customers') }}" class="nav-link">
-            🖨️ Клієнти
-        </a>
-        <a href="{{ url_for('analytics.print_report', report_type='products') }}" class="nav-link">
-            🖨️ Товари
-        </a>
-        <a href="{{ url_for('analytics.print_report', report_type='checks') }}" class="nav-link">
-            🖨️ Чеки
-        </a>
+        <a href="{{ url_for('check.all_cashiers_report') }}" class="nav-link">All cashiers report</a>
+        <a href="{{ url_for('analytics.product_sales_volume') }}" class="nav-link">Product sales volume</a>
         {% endif %}
     </nav>
 
     <div class="sidebar-footer">
-        <div class="user-name">{{ session.get('user_name', 'Гість') }}</div>
+        <div class="user-name">{{ session.get('user_name', 'Guest') }}</div>
         <div class="user-role">
             {% if session.get('role') == 'Manager' %}
-                🛠️ Менеджер
+                Manager
             {% elif session.get('role') == 'Cashier' %}
-                💼 Касир
+                Cashier
             {% endif %}
         </div>
-        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger w-100">
-            Вийти із системи
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-danger w-100 mt-2">
+            Logout
         </a>
     </div>
 </div>
 
-<!-- ══ MAIN CONTENT ══════════════════════════════════════════ -->
 <div class="main-content">
-
-    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}

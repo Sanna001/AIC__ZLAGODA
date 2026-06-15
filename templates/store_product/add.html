@@ -12,9 +12,9 @@
             
             <div class="mb-3">
                 <label class="form-label">UPC код (штрих-код)</label>
-                <input type="text" name="UPC" class="form-control" required placeholder="Наприклад: UPC0004">
+                <input type="text" name="UPC" class="form-control" value="{{ new_upc }}" readonly>
+                <small class="text-muted">Код генерується автоматично системою.</small>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Товар з каталогу</label>
                 <select name="id_product" class="form-select" required>

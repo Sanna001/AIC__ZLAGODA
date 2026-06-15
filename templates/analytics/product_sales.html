@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Product Sales {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title m-0">Quantity of Goods Sold for Period</h1>
+        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-outline-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('analytics.product_sales_volume') }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Product</label>
+                    <select name="upc" class="form-select" required>
+                        <option value="">-- Select Product --</option>
+                        {% for sp in store_products %}
+                        <option value="{{ sp.UPC }}" {% if upc == sp.UPC %}selected{% endif %}>
+                            {{ sp.product_name }} (UPC: {{ sp.UPC }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if result is not none %}
+        {% if result.total_sold %}
+        <div class="card shadow-sm border-success">
+            <div class="card-body text-center py-5">
+                <div class="fs-1 fw-bold text-success">{{ result.total_sold }} units</div>
+                <div class="text-muted fs-5 mt-2">
+                    sold for the period <strong>{{ date_from }}</strong> — <strong>{{ date_to }}</strong>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            This product was not sold during the specified period.
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

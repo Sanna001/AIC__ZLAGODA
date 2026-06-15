@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Check Details #{{ check.check_number }} {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Check Details #{{ check.check_number }}</h1>
+        <a href="{{ url_for('check.list_checks') }}" class="btn btn-outline-secondary">
+            Back to Archive
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Creation Date:</strong> {{ check.print_date }}</p>
+                    <p><strong>Cashier:</strong> {{ check.empl_surname }} (ID: {{ check.id_employee }})</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p><strong>Discount Card:</strong> {{ check.card_number or 'No card' }}</p>
+                    <p><strong>Total (incl. VAT):</strong> <span class="h4 text-primary">{{ "%.2f"|format(check.sum_total) }} UAH</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Product</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-end">Unit Price</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product_name }}</td>
+                <td class="text-center">{{ item.product_number }}</td>
+                <td class="text-end">{{ "%.2f"|format(item.selling_price) }} UAH</td>
+                <td class="text-end">{{ "%.2f"|format(item.product_number * item.selling_price) }} UAH</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

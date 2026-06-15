@@ -10,25 +10,37 @@ product_bp = Blueprint('product', __name__, url_prefix='/products')
 @login_required
 def manage_products():
     cat_filter = request.args.get('category_id', '')
+    search_name = request.args.get('search_name', '').strip() # Отримуємо текст пошуку
 
     query = '''
         SELECT p.*, c.category_name FROM Product p
         JOIN Category c ON p.category_number = c.category_number
+        WHERE 1=1
     '''
     params = []
+
+    # Фільтрація за категорією
     if cat_filter:
-        query += " WHERE p.category_number = ?"
+        query += " AND p.category_number = ?"
         params.append(cat_filter)
+    
+    # Фільтрація за назвою товару
+    if search_name:
+        query += " AND LOWER(p.product_name) LIKE LOWER(?)"
+        params.append(f'%{search_name}%')
+
     query += " ORDER BY p.product_name"
 
     conn = get_db_connection()
     products = conn.execute(query, params).fetchall()
     categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
     conn.close()
+    
     return render_template('product/list.html',
                            products=products,
                            categories=categories,
-                           cat_filter=cat_filter)
+                           cat_filter=cat_filter,
+                           search_name=search_name)
 
 
 # Вимога 1 (Manager): додати товар
