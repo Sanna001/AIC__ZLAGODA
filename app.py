@@ -1,6 +1,6 @@
 import sys
 import os
-from datetime import date  # ← ДОДАЙ
+from datetime import date  
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'backend')))
 
@@ -26,7 +26,7 @@ app.register_blueprint(customer_card_bp)
 app.register_blueprint(check_bp)
 app.register_blueprint(analytics_bp)
 
-@app.context_processor          # ← ДОДАЙ ЦЕЙ БЛОК
+@app.context_processor  
 def inject_today():
     return {'today': date.today().strftime('%Y-%m-%d')}
 

@@ -4,9 +4,7 @@ from decorators import login_required, roles_required
 
 category_bp = Blueprint('category', __name__, url_prefix='/category')
 
-
-# Вимога 8 (Manager): усі категорії за назвою
-# Доступно і менеджеру, і касиру
+# усі категорії за назвою
 @category_bp.route('/')
 @login_required
 @roles_required('Manager', 'Cashier')
@@ -17,7 +15,7 @@ def list_categories():
     return render_template('category/list.html', categories=categories)
 
 
-# Вимога 1 (Manager): додати категорію
+# Manager: додати категорію
 @category_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -42,7 +40,7 @@ def add_category():
     return render_template('category/add.html')
 
 
-# Вимога 2 (Manager): редагувати категорію
+# Manager: редагувати категорію
 @category_bp.route('/edit/<int:category_number>', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -80,22 +78,18 @@ def edit_category(category_number):
     return render_template('category/edit.html', category=category)
 
 
-# Вимога 3 (Manager): видалити категорію
+# Manager: видалити категорію
 @category_bp.route('/delete/<int:category_number>', methods=['POST'])
 @login_required
 @roles_required('Manager')
 def delete_category(category_number):
     conn = get_db_connection()
     try:
-        # Спочатку видаляємо всі товари, що належать цій категорії
-        conn.execute('DELETE FROM Product WHERE category_number = ?', (category_number,))
-        # Тепер видаляємо саму категорію
         conn.execute('DELETE FROM Category WHERE category_number = ?', (category_number,))
         conn.commit()
-        flash("Категорію та всі пов'язані з нею товари успішно видалено!", "success")
-    except Exception as e:
-        conn.rollback()
-        flash(f"Помилка при видаленні: {str(e)}", "danger")
+        flash("Category deleted", "success")
+    except Exception:
+        flash("Unable to remove category containing items", "danger")
     finally:
         conn.close()
     return redirect(url_for('category.list_categories'))

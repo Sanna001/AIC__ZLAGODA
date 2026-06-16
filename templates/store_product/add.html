@@ -1,24 +1,24 @@
 {% extends 'base.html' %}
 
-{% block title %}Додати товар на полицю | АІС Злагода{% endblock %}
+{% block title %}Add product to shelf{% endblock %}
 
 {% block content %}
 <div class="card shadow-sm">
     <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">➕ Виставити новий товар на полицю</h4>
+        <h4 class="mb-0">Display a new product on the shelf</h4>
     </div>
     <div class="card-body">
         <form method="POST">
             
             <div class="mb-3">
-                <label class="form-label">UPC код (штрих-код)</label>
+                <label class="form-label">UPC</label>
                 <input type="text" name="UPC" class="form-control" value="{{ new_upc }}" readonly>
-                <small class="text-muted">Код генерується автоматично системою.</small>
+                <small class="text-muted">The code is generated automatically by the system</small>
             </div>
             <div class="mb-3">
-                <label class="form-label">Товар з каталогу</label>
+                <label class="form-label">Product from the catalog</label>
                 <select name="id_product" class="form-select" required>
-                    <option value="" disabled selected>Оберіть товар...</option>
+                    <option value="" disabled selected>Choose a product...</option>
                     {% for p in products %}
                         <option value="{{ p.id_product }}">{{ p.product_name }} (ID: {{ p.id_product }})</option>
                     {% endfor %}
@@ -27,23 +27,23 @@
 
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Ціна продажу (грн)</label>
+                    <label class="form-label">Sale price (UAH)</label>
                     <input type="number" step="0.01" name="selling_price" class="form-control" required min="0">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Кількість (шт)</label>
+                    <label class="form-label">Quantity</label>
                     <input type="number" name="products_number" class="form-control" required min="1">
                 </div>
             </div>
 
             <div class="mb-3 form-check">
                 <input type="checkbox" name="promotional_product" value="1" class="form-check-input" id="isPromo">
-                <label class="form-check-label" for="isPromo">Акційний товар</label>
+                <label class="form-check-label" for="isPromo">Promotional product</label>
             </div>
 
             <div class="d-flex justify-content-between">
-                <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-secondary">Назад</a>
-                <button type="submit" class="btn btn-success">Зберегти</button>
+                <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-secondary">Back</a>
+                <button type="submit" class="btn btn-success">Save</button>
             </div>
         </form>
     </div>

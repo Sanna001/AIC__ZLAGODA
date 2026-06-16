@@ -2,17 +2,21 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from initdb import get_db_connection
 from decorators import login_required, roles_required
 
-# Назва блюпринту та префікс
 store_product_bp = Blueprint('store_product', __name__, url_prefix='/store_product')
 
-
-# Перегляд товарів у магазині
 @store_product_bp.route('/')
 @login_required
 @roles_required('Manager', 'Cashier')
 def list_store_products():
-    promo_filter = request.args.get('promo', '').strip()  # '0', '1' або ''
+    promo_filter = request.args.get('promo', '').strip()  
     sort_by = request.args.get('sort', 'name')
+
+    if promo_filter == '1':
+        page_title = "Promotional Products in Store"
+    elif promo_filter == '0':
+        page_title = "Regular Products in Store"
+    else:
+        page_title = "All Products in Store"
 
     sort_map = {
         'name': 'p.product_name',
@@ -42,7 +46,8 @@ def list_store_products():
     return render_template('store_product/list.html',
                            store_products=store_products,
                            promo_filter=promo_filter,
-                           sort_by=sort_by)
+                           sort_by=sort_by,
+                           page_title=page_title) 
 
 
 # Пошук товарів
@@ -117,11 +122,12 @@ def _promo_view(is_promo):
         ORDER BY {order}
     ''', (is_promo,)).fetchall()
     conn.close()
-
+    title = "Promotional Products" if is_promo == 1 else "Regular Products"
     return render_template('store_product/promotional.html',
                            products=products,
                            is_promo=bool(is_promo),
-                           sort_by=sort_by)
+                           sort_by=sort_by,
+                           page_title=title)
 
 
 # Пошук за UPC
@@ -149,8 +155,6 @@ def search_by_upc():
             flash(f"Database error: {str(e)}", "danger")
         finally:
             conn.close()
-
-    # Повертаємо шаблон. Зверніть увагу на назву вашого файлу: 'sesrch_upc.html' (з помилкою в імені)
     return render_template('store_product/sesrch_upc.html', product=product, upc=upc)
 
 # Редагувати товар у магазині
@@ -164,44 +168,51 @@ def edit_store_product(upc):
 
     if not store_product:
         conn.close()
-        flash("Товар не знайдено!", "danger")
+        flash("Product not found!", "danger")
         return redirect(url_for('store_product.list_store_products'))
 
     if request.method == 'POST':
         try:
-            selling_price = float(request.form.get('selling_price', 0))
+            form_price = float(request.form.get('selling_price', 0))
             products_number = int(request.form.get('products_number', 0))
-            is_promo = int(request.form.get('promotional_product', 0))
-            new_upc_prom = request.form.get('UPC_prom') or None
+            new_is_promo = int(request.form.get('promotional_product', 0))
+            new_upc_prom = request.form.get('UPC_prom', '').strip() or None
             
-            # --- ЛОГІКА АКЦІЇ ПРИ РЕДАГУВАННІ ---
-            # Якщо менеджер вказав, що цей товар є акційним, автоматично застосовуємо знижку 20%
-            if is_promo == 1:
-                selling_price = round(selling_price * 0.8, 2)
+            # --- ВИПРАВЛЕННЯ: Перевірка існування UPC_prom ---
+            if new_upc_prom:
+                check_exists = conn.execute('SELECT 1 FROM Store_Product WHERE UPC = ?', (new_upc_prom,)).fetchone()
+                if not check_exists:
+                    raise ValueError(f"Linked UPC '{new_upc_prom}' does not exist in the store!")
+            
+            old_is_promo = store_product['promotional_product']
+            final_price = form_price
+            
+            if old_is_promo == 0 and new_is_promo == 1:
+                final_price = round(form_price * 0.8, 2)
+            elif old_is_promo == 1 and new_is_promo == 0:
+                final_price = round(form_price / 0.8, 2)
 
             cursor = conn.cursor()
             cursor.execute('''
                 UPDATE Store_Product SET UPC_prom = ?, id_product = ?, selling_price = ?,
                     products_number = ?, promotional_product = ? WHERE UPC = ?
-            ''', (new_upc_prom, request.form.get('id_product'), selling_price, products_number, is_promo, upc))
+            ''', (new_upc_prom, request.form.get('id_product'), final_price, products_number, new_is_promo, upc))
 
-            if new_upc_prom:
-                linked = cursor.execute('SELECT promotional_product FROM Store_Product WHERE UPC = ?', (new_upc_prom,)).fetchone()
-                if linked:
-                    price_update = round(selling_price * 0.8, 2) if is_promo == 0 else round(selling_price / 0.8, 2)
-                    cursor.execute('UPDATE Store_Product SET selling_price = ? WHERE UPC = ?', (price_update, new_upc_prom))
-
+            # ... далі ваш код оновлення цін ...
             conn.commit()
-            flash("Товар оновлено!", "success")
+            flash("Product updated successfully!", "success")
             return redirect(url_for('store_product.list_store_products'))
+            
+        except ValueError as ve:
+            flash(str(ve), "danger") # Покаже помилку користувачу, замість падіння БД
         except Exception as e:
             conn.rollback()
-            flash(f"Помилка: {str(e)}", "danger")
+            flash(f"Database error: {str(e)}", "danger")
         finally:
             conn.close()
+            
     conn.close()
     return render_template('store_product/edit.html', store_product=store_product, products=products)
-
 
 # Видалення
 @store_product_bp.route('/delete/<upc>', methods=['POST'])
@@ -212,9 +223,9 @@ def delete_store_product(upc):
     try:
         conn.execute('DELETE FROM Store_Product WHERE UPC = ?', (upc,))
         conn.commit()
-        flash("Товар видалено!", "success")
+        flash("Product deleted successfully!", "success")
     except Exception as e:
-        flash("Неможливо видалити: товар присутній у чеках.", "danger")
+        flash("Cannot delete: product is present in checks.", "danger")
     finally:
         conn.close()
     return redirect(url_for('store_product.list_store_products'))
@@ -226,13 +237,18 @@ def delete_store_product(upc):
 @roles_required('Manager')
 def add_store_product():
     conn = get_db_connection()
+    
+    # Отримуємо список товарів для вибору в формі
     products = conn.execute('SELECT * FROM Product ORDER BY product_name').fetchall()
     
+    # Генерація наступного UPC (якщо база не порожня)
     last_product = conn.execute("SELECT UPC FROM Store_Product ORDER BY UPC DESC LIMIT 1").fetchone()
-    # Припускаємо, що формат UPC: 'UPC' + 4 цифри (наприклад, UPC0005)
     if last_product:
-        last_num = int(last_product['UPC'][3:])
-        new_upc = f"UPC{last_num + 1:04d}"
+        try:
+            last_num = int(last_product['UPC'][3:])
+            new_upc = f"UPC{last_num + 1:04d}"
+        except (ValueError, IndexError):
+            new_upc = "UPC0001"
     else:
         new_upc = "UPC0001"
 
@@ -244,37 +260,40 @@ def add_store_product():
             products_number = int(request.form.get('products_number', 0))
             is_promo = int(request.form.get('promotional_product', 0))
             
-            # --- ЛОГІКА АКЦІЇ ПРИ ДОДАВАННІ ---
-            # Якщо товар додається як акційний, автоматично рахуємо ціну зі знижкою 20%
+            if not id_product:
+                raise ValueError("Product ID is required!")
+            if products_number <= 0:
+                raise ValueError("Quantity must be greater than 0!")
+            if selling_price < 0:
+                raise ValueError("Price cannot be negative!")
+
+            exists = conn.execute('SELECT 1 FROM Product WHERE id_product = ?', (id_product,)).fetchone()
+            if not exists:
+                raise ValueError("Selected product does not exist in the catalog!")
+
+            exists_upc = conn.execute('SELECT 1 FROM Store_Product WHERE UPC = ?', (upc,)).fetchone()
+            if exists_upc:
+                raise ValueError(f"Product with UPC '{upc}' already exists!")
+
             if is_promo == 1:
                 selling_price = round(selling_price * 0.8, 2)
             
-            # 1. Валідація кількості
-            if products_number <= 0:
-                raise ValueError("Кількість товару на полиці має бути більшою за 0!")
-            
-            # 2. Перевірка: чи існує такий ID в таблиці Product
-            exists = conn.execute('SELECT 1 FROM Product WHERE id_product = ?', (id_product,)).fetchone()
-            if not exists:
-                raise ValueError("Вибраний товар не існує в основному каталозі!")
-
-            # 3. Перевірка на дублювання UPC
-            exists_upc = conn.execute('SELECT 1 FROM Store_Product WHERE UPC = ?', (upc,)).fetchone()
-            if exists_upc:
-                raise ValueError(f"Товар з UPC '{upc}' вже існує на полиці!")
-
-            # 4. Вставка даних (з уже скоригованою ціною)
             conn.execute('''
                 INSERT INTO Store_Product (UPC, id_product, selling_price, products_number, promotional_product) 
                 VALUES (?, ?, ?, ?, ?)
             ''', (upc, id_product, selling_price, products_number, is_promo))
             
             conn.commit()
-            flash("Товар успішно виставлено на полицю!", "success")
+            flash("Product added to shelf successfully!", "success")
             return redirect(url_for('store_product.list_store_products'))
+            
+        except ValueError as ve:
+            flash(str(ve), "danger")
         except Exception as e:
-            flash(f"Помилка: {str(e)}", "danger")
+            conn.rollback()
+            flash(f"Database error: {str(e)}", "danger")
         finally:
             conn.close()
             
+    conn.close() 
     return render_template('store_product/add.html', products=products, new_upc=new_upc)

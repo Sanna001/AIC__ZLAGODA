@@ -2,11 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from backend.initdb import get_db_connection
 from decorators import login_required, roles_required
 
-# ВИПРАВЛЕНО: назва блюпринту збігається з тим, що в app.py
 customer_card_bp = Blueprint('customer_card', __name__, url_prefix='/customers')
 
-
-# Вимоги 3, 7 (Cashier) / Вимоги 7, 12 (Manager):
 # Сортує за прізвищем. Менеджер фільтрує за відсотком, касир шукає за прізвищем
 @customer_card_bp.route('/')
 @login_required
@@ -69,7 +66,6 @@ def edit_customer(card_id):
             conn.close()
             return render_template('customer/edit_customer.html', customer=cust)
 
-        # Оновлення
         try:
             conn.execute('''
                 UPDATE Customer_Card
@@ -84,13 +80,13 @@ def edit_customer(card_id):
             flash(f"Помилка оновлення: {str(e)}", "danger")
         finally:
             conn.close()
-            return redirect(url_for('customer_card.manage_customers'))
+
+        return redirect(url_for('customer_card.manage_customers'))
 
     conn.close()
     return render_template('customer/edit_customer.html', customer=cust)
 
-# Вимога 1 (Manager) / Вимога 8 (Cashier): додати клієнта
-# Вимога 1 (Manager) / Вимога 8 (Cashier): додати клієнта
+# додати клієнта
 @customer_card_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_customer():
@@ -119,10 +115,9 @@ def add_customer():
 
         conn = get_db_connection()
         
-        # --- ЛОГІКА АВТОГЕНЕРАЦІЇ КАРТКИ ---
+        # автогенерування номеру картки шоб не треба було вручну
         last_card = conn.execute("SELECT card_number FROM Customer_Card ORDER BY card_number DESC LIMIT 1").fetchone()
         if last_card:
-            # CC100 -> беремо з 2-го символу (індекс 2)
             last_num = int(last_card['card_number'][2:])
             new_card_number = f"CC{last_num + 1}"
         else:
@@ -148,7 +143,7 @@ def add_customer():
     return render_template('customer/add_customer.html')
 
 
-# Вимога 3 (Manager): видалити клієнта
+# видалити клієнта 
 @customer_card_bp.route('/delete/<card_id>', methods=['POST'])
 @login_required
 @roles_required('Manager')

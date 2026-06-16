@@ -31,7 +31,7 @@ def login():
             session['role'] = user['empl_role']
             return redirect(url_for('auth.dashboard'))
         else:
-            flash("Невірні дані або пароль!", "danger")
+            flash("Invalid credentials or password!", "danger")
 
     return render_template('login.html')
 

@@ -4,13 +4,12 @@ from decorators import login_required, roles_required
 
 product_bp = Blueprint('product', __name__, url_prefix='/products')
 
-
-# Вимоги 9, 13 (Manager) / Вимога 1 (Cashier): товари за назвою, фільтр за категорією
+# товари за назвою, фільтр за категорією
 @product_bp.route('/')
 @login_required
 def manage_products():
     cat_filter = request.args.get('category_id', '')
-    search_name = request.args.get('search_name', '').strip() # Отримуємо текст пошуку
+    search_name = request.args.get('search_name', '').strip() 
 
     query = '''
         SELECT p.*, c.category_name FROM Product p
@@ -43,7 +42,7 @@ def manage_products():
                            search_name=search_name)
 
 
-# Вимога 1 (Manager): додати товар
+# додати товар
 @product_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -57,22 +56,21 @@ def add_product():
         chars = request.form.get('characteristics', '').strip() or None
 
         if not cat_num or not name:
-            flash("Заповніть усі обов'язкові поля!", "danger")
+            flash("Please fill in all required fields!", "danger")
             conn.close()
             return render_template('product/add.html', categories=categories)
 
         try:
-            # SQL автоматично призначить ID, якщо ви вкажете тільки потрібні стовпці
             conn.execute(
                 'INSERT INTO Product (category_number, product_name, characteristics) VALUES (?, ?, ?)',
                 (int(cat_num), name, chars)
             )
             conn.commit()
-            flash("Товар успішно додано!", "success")
+            flash("Product added successfully!", "success")
             return redirect(url_for('product.manage_products'))
         except Exception as e:
             conn.rollback()
-            flash(f"Помилка: {str(e)}", "danger")
+            flash(f"Error: {str(e)}", "danger")
         finally:
             conn.close()
 
@@ -80,7 +78,7 @@ def add_product():
     return render_template('product/add.html', categories=categories)
 
 
-# Вимога 2 (Manager): редагувати товар
+# редагувати товар
 @product_bp.route('/edit/<int:id_product>', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -93,7 +91,7 @@ def edit_product(id_product):
 
     if not product:
         conn.close()
-        flash("Товар не знайдено!", "danger")
+        flash("Product not found!", "danger")
         return redirect(url_for('product.manage_products'))
 
     if request.method == 'POST':
@@ -102,7 +100,7 @@ def edit_product(id_product):
         chars = request.form.get('characteristics', '').strip() or None
 
         if not cat_num or not name:
-            flash("Заповніть усі обов'язкові поля!", "danger")
+            flash("Please fill in all required fields!", "danger")
             conn.close()
             return render_template('product/edit.html', product=product, categories=categories)
 
@@ -113,11 +111,11 @@ def edit_product(id_product):
                 WHERE id_product = ?
             ''', (int(cat_num), name, chars, id_product))
             conn.commit()
-            flash("Товар успішно оновлено!", "success")
+            flash("Product updated successfully!", "success")
             return redirect(url_for('product.manage_products'))
         except Exception as e:
             conn.rollback()
-            flash(f"Помилка: {str(e)}", "danger")
+            flash(f"Error: {str(e)}", "danger")
         finally:
             conn.close()
 
@@ -125,7 +123,7 @@ def edit_product(id_product):
     return render_template('product/edit.html', product=product, categories=categories)
 
 
-# Вимога 3 (Manager): видалити товар
+# видалити товар менеджер 
 @product_bp.route('/delete/<int:id_product>', methods=['POST'])
 @login_required
 @roles_required('Manager')
@@ -134,10 +132,10 @@ def delete_product(id_product):
     try:
         conn.execute('DELETE FROM Product WHERE id_product = ?', (id_product,))
         conn.commit()
-        flash("Товар успішно видалено!", "success")
+        flash("Product deleted successfully!", "success")
     except Exception:
         conn.rollback()
-        flash("Неможливо видалити товар, який присутній у магазині або чеках!", "danger")
+        flash("Cannot delete product that is present in the store or receipts!", "danger")
     finally:
         conn.close()
     return redirect(url_for('product.manage_products'))

@@ -1,4 +1,3 @@
-# employees.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash
 from initdb import get_db_connection
@@ -8,8 +7,7 @@ import sqlite3
 
 employees_bp = Blueprint('employees', __name__, url_prefix='/employees')
 
-
-# Перегляд списку працівників
+# перегляд списку працівників 
 @employees_bp.route('/')
 @login_required
 @roles_required('Manager')
@@ -36,9 +34,6 @@ def list_employees():
     return render_template('employees/list.html',
                            employees=employees, role=role, search=search)
 
-
-
-
 @employees_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -62,18 +57,18 @@ def add_employee():
                           request.form.get('empl_role'), 
                           values['salary'],
                           values['birth'],
-                          values['start'],  # Використовуємо перевірене значення
+                          values['start'],
                           values['phone'],
                           request.form.get('city'), 
                           request.form.get('street'), 
                           request.form.get('zip_code'), 
                           generate_password_hash(request.form.get('password'))))
             conn.commit()
-            flash(f"Працівника додано! ID: {new_id}", "success")
+            flash(f"Employee added successfully! ID: {new_id}", "success")
             return redirect(url_for('employees.list_employees'))
         except Exception as e:
             conn.rollback()
-            flash(f"Помилка: {str(e)}", "danger")
+            flash(f"Error: {str(e)}", "danger")
         finally:
             conn.close()
             
@@ -84,20 +79,19 @@ def add_employee():
 @roles_required('Manager')
 def view_employee(id_employee):
     if session.get('role') != 'Manager' and session.get('user_id') != id_employee:
-        flash("Ви не маєте доступу до чужого профілю", "danger")
+        flash("You do not have permission to view this profile", "danger")
         return redirect(url_for('auth.dashboard'))
     conn = get_db_connection()
     emp = conn.execute('SELECT * FROM Employee WHERE id_employee = ?', (id_employee,)).fetchone()
     conn.close()
     
     if not emp:
-        flash("Працівника не знайдено!", "danger")
+        flash("Employee not found!", "danger")
         return redirect(url_for('employees.list_employees'))
         
     return render_template('employees/profile.html', employee=emp)
 
-
-# Перегляд власного профілю працівника
+# перегляд свого профілю
 @employees_bp.route('/profile')
 @login_required
 @roles_required('Cashier', 'Manager')
@@ -109,15 +103,14 @@ def profile():
     conn.close()
 
     if not employee:
-        flash("Дані не знайдено!", "danger")
+        flash("Data not found!", "danger")
         return redirect(url_for('auth.dashboard'))
 
     return render_template('employees/profile.html', employee=employee)
 
 def _validate_employee_form(form):
-    """Повертає (error_message, parsed_values) або (None, parsed_values)"""
+    """Returns (error_message, parsed_values) or (None, parsed_values)"""
     
-    # 1. Обмеження: Вік не менше 18 років
     birth = form.get('date_of_birth', '')
     try:
         birth_date = date.fromisoformat(birth)
@@ -126,47 +119,39 @@ def _validate_employee_form(form):
             (today.month, today.day) < (birth_date.month, birth_date.day)
         )
         if age < 18:
-            return "Вік працівника не може бути менше 18 років!", None
+            return "Employee age cannot be less than 18 years!", None
     except ValueError:
-        return "Невірний формат дати народження!", None
+        return "Invalid date of birth format!", None
 
-    # ВАЛІДАЦІЯ ДАТИ НАЙМУ (Виправлені відступи)
     start_date_str = form.get('date_of_start', '')
     try:
         start_date = date.fromisoformat(start_date_str)
         if start_date > date.today():
-            return "Дата найму не може бути в майбутньому!", None
+            return "Hire date cannot be in the future!", None
     except ValueError:
-        return "Невірний формат дати найму!", None
+        return "Invalid hire date format!", None
     
-    # 2. Обмеження: Довжина номеру телефону
     phone = form.get('phone_number', '').strip()
     if len(phone) > 13:
-        return "Номер телефону не може перевищувати 13 символів (включаючи '+')!", None
+        return "Phone number cannot exceed 13 characters!", None
     if not phone.startswith('+'):
-        return "Номер телефону повинен починатися з символу '+'!", None
+        return "Phone number must start with '+'!", None
 
-    # 3. Обмеження: Зарплата
     salary = form.get('salary', 0)
     try:
         salary = float(salary)
     except ValueError:
-        return "Невірний формат зарплати!", None
+        return "Invalid salary format!", None
     if salary < 0:
-        return "Зарплата не може бути від'ємною!", None
+        return "Salary cannot be negative!", None
 
-    # ПОВЕРТАЄМО ВСІ ПЕРЕВІРЕНІ ЗНАЧЕННЯ
     return None, {
         'birth': birth,
-        'start': start_date_str, # Додано це значення
+        'start': start_date_str,
         'phone': phone,
         'salary': salary
     }
 
-
-# Додавання працівника менеджерів
-# Додавання працівника менеджером
-# Редагування працівника (Виправлено використання валідатора)
 @employees_bp.route('/edit/<id_employee>', methods=['GET', 'POST'])
 @login_required
 @roles_required('Manager')
@@ -178,18 +163,16 @@ def edit_employee(id_employee):
 
     if not employee:
         conn.close()
-        flash("Працівника не знайдено!", "danger")
+        flash("Employee not found!", "danger")
         return redirect(url_for('employees.list_employees'))
 
     if request.method == 'POST':
-        # 1. Виклик валідації
         error, values = _validate_employee_form(request.form)
         if error:
             flash(error, "danger")
             conn.close()
             return render_template('employees/edit.html', employee=employee)
 
-        # 2. Оновлення з використанням перевірених значень (values)
         try:
             conn.execute('''
                 UPDATE Employee SET
@@ -203,50 +186,46 @@ def edit_employee(id_employee):
                 request.form.get('empl_name'),
                 request.form.get('empl_patronymic') or None,
                 request.form.get('empl_role'),
-                values['salary'],        # Перевірене значення
-                values['birth'],         # Перевірене значення
-                values['start'],         # ТЕПЕР ВИКОРИСТОВУЄТЬСЯ ПЕРЕВІРЕНЕ ЗНАЧЕННЯ
-                values['phone'],         # Перевірене значення
+                values['salary'],
+                values['birth'],
+                values['start'],
+                values['phone'],
                 request.form.get('city'),
                 request.form.get('street'),
                 request.form.get('zip_code'),
                 id_employee
             ))
             conn.commit()
-            flash("Дані працівника оновлено!", "success")
+            flash("Employee data updated!", "success")
             return redirect(url_for('employees.list_employees'))
         except Exception as e:
             conn.rollback()
-            flash(f"Помилка бази даних: {str(e)}", "danger")
+            flash(f"Database error: {str(e)}", "danger")
         finally:
             conn.close()
 
     conn.close()
     return render_template('employees/edit.html', employee=employee)
 
-
-# Видалення працівника
 @employees_bp.route('/delete/<id_employee>', methods=['POST'])
 @login_required
 @roles_required('Manager')
 def delete_employee(id_employee):
     if session.get('user_id') == id_employee:
-        flash("Ви не можете звільнити самого себе!", "danger")
+        flash("You cannot fire yourself!", "danger")
         return redirect(url_for('employees.list_employees'))
 
     conn = get_db_connection()
     try:
         conn.execute('DELETE FROM Employee WHERE id_employee = ?', (id_employee,))
         conn.commit()
-        flash("Працівника успішно видалено.", "success")
+        flash("Employee deleted successfully.", "success")
     except Exception as e:
-        flash(f"Неможливо видалити (можливо, є записи в чеках): {str(e)}", "danger")
+        flash(f"Cannot delete (possible records in receipts): {str(e)}", "danger")
     finally:
         conn.close()
     return redirect(url_for('employees.list_employees'))
 
-
-# Пошук контактних даних за прізвищем
 @employees_bp.route('/find_contact')
 @login_required
 @roles_required('Manager')
@@ -265,6 +244,6 @@ def find_contact():
         conn.close()
 
         if not employee:
-            flash(f"Працівника з прізвищем '{surname}' не знайдено!", "warning")
+            flash(f"Employee with surname '{surname}' not found!", "warning")
 
     return render_template('employees/find_contact.html', employee=employee, surname=surname)

@@ -26,7 +26,7 @@
             <div class="col-md-3">
                 <label class="form-label">Cashier</label>
                 <select name="cashier_id" class="form-select">
-                    <option value="">All cashier</option>
+                    <option value="">All cashiers</option>
                     {% for c in cashiers %}
                     <option value="{{ c.id_employee }}" {% if request.args.get('cashier_id')|string == c.id_employee|string %}selected{% endif %}>
                         {{ c.empl_surname }}
@@ -37,14 +37,14 @@
             {% endif %}
 
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100">🔍 Пошук</button>
+                <button type="submit" class="btn btn-primary w-100">🔍 Search</button>
             </div>
         </form>
     </div>
 </div>
 
 <div class="alert alert-info">
-    Total sum for period: <strong>{{ "%.2f"|format(total_sum | default(0)) }} грн</strong>
+    Total sum for period: <strong>{{ "%.2f"|format(total_sum | default(0)) }} UAH</strong>
 </div>
 
 {% if session.get('role') == 'Cashier' %}
@@ -52,9 +52,9 @@
     <div class="card-body">
         <form method="GET" action="{{ url_for('check.search_check_by_number') }}" class="row g-3 align-items-end">
             <div class="col-md-8">
-                <label class="form-label fw-bold">Check search by number</label>
+                <label class="form-label fw-bold">Search check by number</label>
                 <input type="text" name="check_number" class="form-control" 
-                       placeholder="Введіть номер чеку, напр. CH20260615143000"
+                       placeholder="Enter check number, e.g. CH20260615143000"
                        value="{{ request.args.get('check_number', '') }}">
             </div>
             <div class="col-md-4">
@@ -72,7 +72,8 @@
             <th>Cashier</th>
             <th>Date</th>
             <th>Sum</th>
-            <th>Actions</th> </tr>
+            <th>Actions</th>
+        </tr>
     </thead>
     <tbody>
         {% for chk in checks %}
@@ -80,7 +81,7 @@
             <td>{{ chk.check_number }}</td>
             <td>{{ chk.empl_surname }}</td>
             <td>{{ chk.print_date }}</td>
-            <td>{{ "%.2f"|format(chk.sum_total) }} грн</td>
+            <td>{{ "%.2f"|format(chk.sum_total) }} UAH</td>
             <td>
                 <a href="{{ url_for('check.view_check', check_number=chk.check_number) }}" class="btn btn-sm btn-info">
                     Details
@@ -89,7 +90,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="5" class="text-center">No check found</td>
+            <td colspan="5" class="text-center">No checks found</td>
         </tr>
         {% endfor %}
     </tbody>

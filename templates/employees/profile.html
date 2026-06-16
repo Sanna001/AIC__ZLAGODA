@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Профіль працівника | АІС Злагода{% endblock %}
+{% block title %}Employee profile{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">👤 Профіль: {{ employee.empl_surname }} {{ employee.empl_name }}</h4>
+            <h4 class="mb-0">Profile: {{ employee.empl_surname }} {{ employee.empl_name }}</h4>
             
             {% if session.get('role') == 'Manager' and session.get('user_id') != employee.id_employee %}
             <form action="{{ url_for('employees.delete_employee', id_employee=employee.id_employee) }}" 
-                  method="POST" onsubmit="return confirm('Ви впевнені, що хочете звільнити цього працівника?');">
-                <button type="submit" class="btn btn-danger btn-sm">Звільнити працівника</button>
+                  method="POST" onsubmit="return confirm('Are you sure you want to fire this employee?');">
+                <button type="submit" class="btn btn-danger btn-sm">Dismiss the employee</button>
             </form>
             {% endif %}
         </div>
@@ -19,46 +19,46 @@
         <div class="card-body">
             <table class="table table-bordered">
                 <tr>
-                    <th style="width: 30%;">ID працівника</th>
+                    <th style="width: 30%;">Employee ID</th>
                     <td><code>{{ employee.id_employee }}</code></td>
                 </tr>
                 <tr>
-                    <th>Роль</th>
+                    <th>Role</th>
                     <td>
                         {% if employee.empl_role == 'Manager' %}
-                            <span class="badge bg-danger">Менеджер</span>
+                            <span class="badge bg-danger">Manager</span>
                         {% else %}
-                            <span class="badge bg-info text-dark">Касир</span>
+                            <span class="badge bg-info text-dark">Cashier</span>
                         {% endif %}
                     </td>
                 </tr>
                 <tr>
-                    <th>Зарплата</th>
-                    <td>{{ employee.salary }} грн</td>
+                    <th>Salary</th>
+                    <td>{{ employee.salary }} UAH</td>
                 </tr>
                 <tr>
-                    <th>Телефон</th>
+                    <th>Phone numbet</th>
                     <td>{{ employee.phone_number }}</td>
                 </tr>
                 <tr>
-                    <th>Адреса</th>
-                    <td>{{ employee.city }}, вул. {{ employee.street }}, індекс {{ employee.zip_code }}</td>
-                </tr>
+    <th>Address</th> 
+    <td>{{ employee.city }}, st. {{ employee.street }}, zip: {{ employee.zip_code }}</td>
+</tr>
                 <tr>
-                    <th>Дата народження</th>
+                    <th>Date of birth</th>
                     <td>{{ employee.date_of_birth }}</td>
                 </tr>
                 <tr>
-                    <th>Дата найму</th>
+                    <th>Date of employment</th>
                     <td>{{ employee.date_of_start }}</td>
                 </tr>
             </table>
             
             <div class="mt-3">
     {% if session.get('role') == 'Manager' %}
-        <a href="{{ url_for('employees.list_employees') }}" class="btn btn-secondary">⬅ Назад до списку</a>
+        <a href="{{ url_for('employees.list_employees') }}" class="btn btn-secondary">Back to list</a>
     {% else %}
-        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-secondary">⬅ На головну</a>
+        <a href="{{ url_for('auth.dashboard') }}" class="btn btn-secondary">Back to main page</a>
     {% endif %}
 </div>
         </div>

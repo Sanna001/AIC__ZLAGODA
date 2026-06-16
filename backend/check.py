@@ -3,28 +3,23 @@ from backend.initdb import get_db_connection
 from decorators import login_required, roles_required
 from datetime import date
 import datetime
+import sqlite3
 
 check_bp = Blueprint('check', __name__, url_prefix='/check')
 
-
-# =========================================================================
-# ПЕРЕГЛЯД АРХІВУ ЧЕКІВ (Вимоги для Менеджера та Касира)
-# =========================================================================
+# перегляд архіву чеків
 @check_bp.route('/')
 @login_required
 def list_checks():
-    # Параметри з форми пошуку
     date_from = request.args.get('date_from', date.today().strftime('%Y-%m-%d'))
     date_to = request.args.get('date_to', date.today().strftime('%Y-%m-%d'))
     cashier_id = request.args.get('cashier_id', '')
 
     conn = get_db_connection()
     
-    # Базовий запит
     query = "SELECT cb.*, e.empl_surname FROM Check_bill cb JOIN Employee e ON cb.id_employee = e.id_employee WHERE 1=1"
     params = []
 
-    # Обмеження ролей
     if session.get('role') == 'Cashier':
         query += " AND cb.id_employee = ?"
         params.append(session['user_id'])
@@ -32,18 +27,13 @@ def list_checks():
         query += " AND cb.id_employee = ?"
         params.append(cashier_id)
 
-    # Фільтр по датах
     query += " AND DATE(cb.print_date) BETWEEN DATE(?) AND DATE(?)"
     params.extend([date_from, date_to])
     
-    # Отримання списку чеків
     query_list = query + " ORDER BY cb.print_date DESC"
     checks = conn.execute(query_list, params).fetchall()
 
-    # Розрахунок суми (безпечний спосіб)
     sum_query = "SELECT SUM(sum_total) FROM Check_bill cb WHERE 1=1"
-    # Потрібно продублювати фільтри для запиту суми, бо використання .replace() 
-    # з попереднім запитом може бути ненадійним через JOIN
     sum_params = []
     if session.get('role') == 'Cashier':
         sum_query += " AND id_employee = ?"
@@ -57,7 +47,6 @@ def list_checks():
     total_result = conn.execute(sum_query, sum_params).fetchone()
     total_sum = total_result[0] if total_result and total_result[0] else 0
 
-    # Касири
     cashiers = conn.execute("SELECT id_employee, empl_surname FROM Employee WHERE empl_role = 'Cashier'").fetchall()
     
     conn.close()
@@ -68,9 +57,7 @@ def list_checks():
                            date_to=date_to,
                            cashiers=cashiers)
 
-# =========================================================================
-# ДОДАТКОВО: Чеки касира за сьогодні (Вимога для Cashier)
-# =========================================================================
+# чеки касира за сьогодні 
 @check_bp.route('/my-today')
 @login_required
 @roles_required('Cashier')
@@ -78,7 +65,6 @@ def my_checks_today():
     today_str = date.today().strftime('%Y-%m-%d')
     conn = get_db_connection()
     
-    # Вибираємо чеки лише поточного касира за сьогодні
     checks = conn.execute('''
         SELECT cb.*, e.empl_surname 
         FROM Check_bill cb 
@@ -88,13 +74,10 @@ def my_checks_today():
     ''', (session['user_id'], today_str)).fetchall()
     
     conn.close()
-    # Використовуємо той самий шаблон списку, передаючи відфільтровані дані
     return render_template('check/list.html', checks=checks, cashiers=[])
 
 
-# =========================================================================
-# ДОДАТКОВО: Чеки касира за період (Вимога для Cashier)
-# =========================================================================
+# чеки касира за період 
 @check_bp.route('/my-period')
 @login_required
 @roles_required('Cashier')
@@ -125,12 +108,7 @@ def my_checks():
 
     return render_template('check/list.html', checks=checks, cashiers=[])
 
-# =========================================================================
-# АНАЛІТИКА ТА ГЕНЕРАЦІЯ ЗВІТІВ ПО ЧЕКАХ (Вимоги 18, 19, 20)
-# =========================================================================
-# Додайте цей маршрут для звіту (Вимоги 17-20)
-import sqlite3
-
+# аналітика та звіти 
 @check_bp.route('/generate_report')
 @login_required
 @roles_required('Manager', 'Cashier')
@@ -140,7 +118,6 @@ def generate_report():
     cashier_id = request.args.get('cashier_id')
 
     conn = get_db_connection()
-    # Встановлюємо row_factory для зручної роботи зі словниками
     conn.row_factory = sqlite3.Row 
     
     query = """
@@ -151,7 +128,6 @@ def generate_report():
     """
     params = [date_from, date_to]
 
-    # Касир може бачити лише власні чеки
     if session.get('role') == 'Cashier':
         query += " AND cb.id_employee = ?"
         params.append(session['user_id'])
@@ -163,7 +139,6 @@ def generate_report():
 
     report_data = []
     for chk in checks_rows:
-        # Отримуємо товари для кожного чека
         items = conn.execute('''
             SELECT p.product_name, s.product_number, s.selling_price 
             FROM Sale s
@@ -172,13 +147,11 @@ def generate_report():
             WHERE s.check_number = ?
         ''', (chk['check_number'],)).fetchall()
         
-        # Перетворюємо результати в звичайні словники (dict)
         report_data.append({
             'check': dict(chk), 
             'products': [dict(item) for item in items]
         })
 
-    # Розрахунок загальної суми
     sum_query = "SELECT SUM(sum_total) FROM Check_bill WHERE DATE(print_date) BETWEEN DATE(?) AND DATE(?)"
     sum_params = [date_from, date_to]
     if cashier_id:
@@ -193,9 +166,7 @@ def generate_report():
                            total_revenue=total_revenue,
                            date_from=date_from, date_to=date_to)
 
-# =========================================================================
-# ВИМОГА 7 (Cashier): СТВОРЕННЯ НОВОГО ЧЕКУ ЗАМОВЛЕННЯ
-# =========================================================================
+# створення нового чеку
 @check_bp.route('/create', methods=['GET', 'POST'])
 @login_required
 @roles_required('Cashier')
@@ -239,18 +210,15 @@ def create_check():
                 total_sum += item_total
                 sale_items.append((upc, qty, price))
 
-            # Перевірка та отримання знижки за дисконтною карткою клієнта
             discount = 0
             if card_number:
                 card = cursor.execute('SELECT percent FROM Customer_Card WHERE card_number = ?', (card_number,)).fetchone()
                 if card:
                     discount = card['percent']
 
-            # Розрахунок кінцевої вартості (ПДВ 20% вже закладено у вартість selling_price)
             final_total = round(total_sum * (1 - discount / 100.0), 2)
             vat = round(final_total * 0.20, 2)
 
-            # Генерація унікального номера чека за поточною мілісекундою/часом
             check_number = "CH" + datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
             cursor.execute('''
@@ -265,7 +233,6 @@ def create_check():
                     VALUES (?, ?, ?, ?)
                 ''', (upc, check_number, qty, price))
 
-                # Списання залишків продукту з торгового залу
                 cursor.execute('''
                     UPDATE Store_Product
                     SET products_number = products_number - ?
@@ -273,17 +240,16 @@ def create_check():
                 ''', (qty, upc))
 
             conn.commit()
-            flash(f"Чек {check_number} успішно створено на суму {final_total} грн!", "success")
+            flash(f"Check {check_number} created. Total sum - {final_total} UAH", "success")
             return redirect(url_for('check.list_checks'))
             
         except Exception as e:
             conn.rollback()
-            flash(f"Помилка оформлення чеку: {str(e)}", "danger")
+            flash(f"Check clearance error: {str(e)}", "danger")
             return redirect(url_for('check.create_check'))
         finally:
             conn.close()
 
-    # GET-запит: Формування даних для інтерфейсу касира
     store_products = conn.execute('''
         SELECT sp.UPC, p.product_name, sp.selling_price, sp.products_number
         FROM Store_Product sp
@@ -298,16 +264,11 @@ def create_check():
     return render_template('check/create_check.html', store_products=store_products, cards=cards)
 
 
-# =========================================================================
-# ПЕРЕГЛЯД ДЕТАЛЕЙ КОНКРЕТНОГО ЧЕКУ
-# =========================================================================
-# Додайте цей маршрут у check.py
-# Додайте цей код у ваш check.py
+# перегляд деталей чеку
 @check_bp.route('/<check_number>')
 @login_required
 def view_check(check_number):
     conn = get_db_connection()
-    # Отримуємо дані чека з інформацією про касира
     check = conn.execute('''
         SELECT cb.*, e.empl_surname 
         FROM Check_bill cb 
@@ -315,7 +276,6 @@ def view_check(check_number):
         WHERE cb.check_number = ?
     ''', (check_number,)).fetchone()
     
-    # Отримуємо товари, що були в чеку
     items = conn.execute('''
         SELECT s.*, p.product_name, sp.selling_price
         FROM Sale s
@@ -330,15 +290,13 @@ def view_check(check_number):
         flash("Чек не знайдено!", "danger")
         return redirect(url_for('check.list_checks'))
 
-    # Касир може переглядати лише власні чеки
     if session.get('role') == 'Cashier' and check['id_employee'] != session['user_id']:
-        flash("У вас немає доступу до цього чеку!", "danger")
+        flash("You don't have access to this check!", "danger")
         return redirect(url_for('check.list_checks'))
         
     return render_template('check/view_check.html', check=check, items=items)
-# =========================================================================
-# ВИМОГА 3 (Manager): СКАСУВАННЯ ЧЕКУ З ПОВЕРНЕННЯМ ТОВАРІВ НА ПОЛИЦІ
-# =========================================================================
+
+# Скасування чеку і повернення товару
 @check_bp.route('/delete/<check_number>', methods=['POST'])
 @login_required
 @roles_required('Manager')
@@ -346,13 +304,11 @@ def delete_check(check_number):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # 1. Отримуємо список товарів та їх кількість з чеку, що скасовується
         items_to_return = cursor.execute(
             'SELECT UPC, product_number FROM Sale WHERE check_number = ?',
             (check_number,)
         ).fetchall()
 
-        # 2. Повертаємо кількість товарів назад до Store_Product
         for item in items_to_return:
             cursor.execute('''
                 UPDATE Store_Product
@@ -360,22 +316,19 @@ def delete_check(check_number):
                 WHERE UPC = ?
             ''', (item['product_number'], item['UPC']))
 
-        # 3. Видаляємо чек (завдяки ON DELETE CASCADE у базі даних, записи зі Sale видаляться автоматично)
         cursor.execute('DELETE FROM Check_bill WHERE check_number = ?', (check_number,))
         
         conn.commit()
-        flash(f"Чек {check_number} скасовано, товари повернуто в торговий зал!", "success")
+        flash(f"Check {check_number} canceled, products returned to the sales hall!", "success")
     except Exception as e:
         conn.rollback()
-        flash(f"Помилка видалення: {str(e)}", "danger")
+        flash(f"Deletion error: {str(e)}", "danger")
     finally:
         conn.close()
         
     return redirect(url_for('check.list_checks'))
 
-# =========================================================================
-# ВИМОГА: Пошук чеку за номером (для Касира)
-# =========================================================================
+# пошук чеку за номером 
 @check_bp.route('/search-by-number')
 @login_required
 @roles_required('Cashier')
@@ -383,7 +336,7 @@ def search_check_by_number():
     check_number = request.args.get('check_number', '').strip()
 
     if not check_number:
-        flash("Введіть номер чеку для пошуку.", "warning")
+        flash("Enter the check number to search", "warning")
         return redirect(url_for('check.list_checks'))
 
     conn = get_db_connection()
@@ -396,12 +349,12 @@ def search_check_by_number():
     conn.close()
 
     if not check:
-        flash(f"Чек з номером «{check_number}» не знайдено.", "danger")
+        flash(f"The check with the number «{check_number}» was not found", "danger")
         return redirect(url_for('check.list_checks'))
 
     # Касир може шукати лише власні чеки
     if check['id_employee'] != session['user_id']:
-        flash("У вас немає доступу до цього чеку.", "danger")
+        flash("You do not have access to this check", "danger")
         return redirect(url_for('check.list_checks'))
 
     return redirect(url_for('check.view_check', check_number=check_number))
@@ -424,7 +377,6 @@ def cashier_sales_report():
     cashier_info = None
 
     if cashier_id:
-        # Загальна сума по касиру за період
         report = conn.execute('''
             SELECT 
                 COUNT(cb.check_number) AS checks_count,
@@ -435,7 +387,6 @@ def cashier_sales_report():
               AND DATE(cb.print_date) BETWEEN DATE(?) AND DATE(?)
         ''', (cashier_id, date_from, date_to)).fetchone()
 
-        # Деталізація по товарах
         products = conn.execute('''
             SELECT 
                 p.product_name,
@@ -468,14 +419,12 @@ def cashier_sales_report():
                            date_to=date_to,
                            cashier_id=cashier_id)
 
-# Додайте цей код у backend/check.py
+
 @check_bp.route('/all_cashiers_report', methods=['GET'])
 @login_required
 @roles_required('Manager')
 def all_cashiers_report():
     conn = get_db_connection()
-    # Тут має бути ваш SQL-запит для звіту по всіх касирах
-    # Наприклад:
     report = conn.execute('''
         SELECT e.empl_surname, SUM(cb.sum_total) as total_sales
         FROM Check_bill cb

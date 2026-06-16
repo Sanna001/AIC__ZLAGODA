@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Клієнти | АІС Злагода{% endblock %}
+{% block title %}Customers | ZLAGODA AIS{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="page-title m-0">💳 Дисконтні картки клієнтів</h1>
+    <h1 class="page-title m-0">💳 Customer discount cards</h1>
     <a href="{{ url_for('customer_card.add_customer') }}" class="btn btn-primary">
-        ➕ Новий клієнт
+        New customer
     </a>
 </div>
 
@@ -14,29 +14,29 @@
     <div class="card-body">
         <form method="GET" action="{{ url_for('customer_card.manage_customers') }}" class="row g-3">
             <div class="col-md-5">
-                <input type="text" name="search_surname" class="form-control" placeholder="Пошук за прізвищем..." value="{{ request.args.get('search_surname', '') }}">
+                <input type="text" name="search_surname" class="form-control" placeholder="Search by surname..." value="{{ request.args.get('search_surname', '') }}">
             </div>
             <div class="col-md-4">
-                <input type="number" name="percent" class="form-control" placeholder="Знижка (%)" value="{{ request.args.get('percent', '') }}">
+                <input type="number" name="percent" class="form-control" placeholder="Discount (%)" value="{{ request.args.get('percent', '') }}">
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100">🔍 Знайти</button>
+                <button type="submit" class="btn btn-primary w-100">Search</button>
             </div>
         </form>
     </div>
 </div>
 
 <div class="card">
-    <div class="card-header">Зареєстровані постійні покупці</div>
+    <div class="card-header">Registered loyal customers</div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>Номер картки</th>
-                        <th>Прізвище та Ім'я</th>
-                        <th>Телефон</th>
-                        <th>Знижка</th>
+                        <th>Card number</th>
+                        <th>Surname and Name</th>
+                        <th>Phone</th>
+                        <th>Discount</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +49,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">Жодної картки не знайдено.</td>
+                        <td colspan="4" class="text-center text-muted py-4">No cards found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

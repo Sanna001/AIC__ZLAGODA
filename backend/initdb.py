@@ -16,11 +16,10 @@ def setup_database():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Обов'язково вмикаємо підтримку Foreign Keys в SQLite
+    # підтримку Foreign Keys в SQLite
     cursor.execute("PRAGMA foreign_keys = ON;")
 
-
-    # 1. Категорії
+    # Категорії
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Category(
         category_number INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,7 +27,7 @@ def setup_database():
     );
     ''')
 
-    # 2. Товари
+    # Товари
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Product(
         id_product INTEGER PRIMARY KEY,
@@ -40,7 +39,7 @@ def setup_database():
     );
     ''')
 
-    # 3. Працівники (Додано password_hash та CHECK констрейнти)
+    # Працівники
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Employee(
         id_employee TEXT PRIMARY KEY,
@@ -59,7 +58,7 @@ def setup_database():
     );
     ''')
 
-    # 4. Картки клієнтів (Додано CHECK для відсотків)
+    # Картки клієнтів 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Customer_Card(
         card_number TEXT PRIMARY KEY,
@@ -74,7 +73,7 @@ def setup_database():
     );
     ''')
 
-    # 5. Чеки (Екрануємо назву "Check", додаємо зв'язки)
+    # Чеки 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS Check_bill(
         check_number TEXT PRIMARY KEY,
@@ -125,7 +124,6 @@ def setup_database():
     manager_password = generate_password_hash("boss_zlagoda")  
     cashier_password = generate_password_hash("cashier_pass")
 
-    # Вставки даних (Усі текстові значення тепер у лапках)
     cursor.execute("INSERT INTO Category VALUES (1, 'Beverages')")
     cursor.execute("INSERT INTO Category VALUES (2, 'Fruits')")
     cursor.execute("INSERT INTO Category VALUES (3, 'Vegetables')")
@@ -148,12 +146,10 @@ def setup_database():
     cursor.execute("INSERT INTO Product VALUES (1012, 2, 'Avocado', 'big')")
     cursor.execute("INSERT INTO Product VALUES (1013, 1, 'Herbal tea', 'cold, caffeine-free, 500ml')")
 
-    # Додано паролі на кінець таблиці
     cursor.execute("INSERT INTO Employee VALUES ('E100', 'Gevalo', 'Liza', 'Romanivna', 'Manager', 45000, '2000-09-09', '2024-10-01', '+380973349688', 'Kyiv', 'Johna McCana 31a', '31045', ?)", (manager_password,))
     cursor.execute("INSERT INTO Employee VALUES ('E101', 'Vus', 'Sofia', 'Oleksiivna', 'Cashier', 20000, '1999-06-02', '2025-05-12', '+380675550310', 'Kyiv', 'Velyka Vasylkivska 67', '31065', ?)", (cashier_password,))
     cursor.execute("INSERT INTO Employee VALUES ('E102', 'Bybis', 'Pavlo', 'Oleksandrovich', 'Cashier', 20000, '1998-01-09', '2025-03-12', '+380981237088', 'Kyiv', 'Velyka Vasylkivska 12', '31065', ?)", (cashier_password,))
    
-    # Додано відсотки знижки (5 та 10) на кінець
     cursor.execute("INSERT INTO Customer_Card VALUES ('CC100', 'Afanasieva', 'Maria', 'Mykolaivna', '+380970543673', 'Kyiv', 'Tarasa Shevchenka 12B', '31021', 5)")
     cursor.execute("INSERT INTO Customer_Card VALUES ('CC101', 'Pavelko', 'Olha', 'Ivanivna', '+380665445123', 'Kyiv', 'Ioana Pavla2 11', '31034', 10)")
 
