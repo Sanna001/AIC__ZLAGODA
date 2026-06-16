@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Cashier Performance{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">Cashier Revenue Report</h1>
+    <a href="{{ url_for('auth.dashboard') }}" class="btn btn-outline-secondary">
+        Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('analytics.cashier_performance') }}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">From Date</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">To Date</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if results %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Results for period: <strong>{{ date_from }}</strong> — <strong>{{ date_to }}</strong></span>
+        <span class="badge bg-secondary">{{ results|length }} cashier(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th class="text-center">Checks Issued</th>
+                        <th class="text-end">Total Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td><code>{{ row.id_employee }}</code></td>
+                        <td><strong>{{ row.empl_surname }} {{ row.empl_name }} {{ row.empl_patronymic or '' }}</strong></td>
+                        <td class="text-center">
+                            <span class="badge bg-info text-dark">{{ row.total_checks }}</span>
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-bold text-success">{{ "%.2f"|format(row.total_revenue or 0) }} UAH</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="2" class="fw-bold">Total</td>
+                        <td class="text-center fw-bold">
+                            {{ results | sum(attribute='total_checks') }}
+                        </td>
+                        <td class="text-end fw-bold text-success">
+                            {% set total = namespace(sum=0) %}
+                            {% for row in results %}{% set total.sum = total.sum + (row.total_revenue or 0) %}{% endfor %}
+                            {{ "%.2f"|format(total.sum) }} UAH
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% elif date_from and date_to %}
+<div class="alert alert-warning">
+    No cashier activity found for the selected period.
+</div>
+{% endif %}
+{% endblock %}

@@ -147,7 +147,7 @@ def setup_database():
     cursor.execute("INSERT INTO Product VALUES (1013, 1, 'Herbal tea', 'cold, caffeine-free, 500ml')")
 
     cursor.execute("INSERT INTO Employee VALUES ('E100', 'Gevalo', 'Liza', 'Romanivna', 'Manager', 45000, '2000-09-09', '2024-10-01', '+380973349688', 'Kyiv', 'Johna McCana 31a', '31045', ?)", (manager_password,))
-    cursor.execute("INSERT INTO Employee VALUES ('E101', 'Vus', 'Sofia', 'Oleksiivna', 'Cashier', 20000, '1999-06-02', '2025-05-12', '+380675550310', 'Kyiv', 'Velyka Vasylkivska 67', '31065', ?)", (cashier_password,))
+    cursor.execute("INSERT INTO Employee VALUES ('E101', 'Vus', 'Sofia', 'Oleksiivna', 'Cashier', 20000, '1999-06-02', '2025-05-12', '+380975550310', 'Kyiv', 'Velyka Vasylkivska 67', '31065', ?)", (cashier_password,))
     cursor.execute("INSERT INTO Employee VALUES ('E102', 'Bybis', 'Pavlo', 'Oleksandrovich', 'Cashier', 20000, '1998-01-09', '2025-03-12', '+380981237088', 'Kyiv', 'Velyka Vasylkivska 12', '31065', ?)", (cashier_password,))
    
     cursor.execute("INSERT INTO Customer_Card VALUES ('CC100', 'Afanasieva', 'Maria', 'Mykolaivna', '+380970543673', 'Kyiv', 'Tarasa Shevchenka 12B', '31021', 5)")

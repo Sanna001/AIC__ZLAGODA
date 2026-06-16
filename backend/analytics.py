@@ -147,3 +147,128 @@ def print_report(report_type):
 
     conn.close()
     return render_template('analytics/report_print.html', report_type=report_type, data=data)
+
+#Запит 1 (Чорна) - рейтинг касирів
+
+@analytics_bp.route('/cashier_performance')#декоратор реєструє маршрут 
+@login_required #перевіряє чи авторизований користувач 
+@roles_required('Manager')#перевіряє роль
+def cashier_performance():
+    date_from = request.args.get('date_from', '')
+    date_to   = request.args.get('date_to',   '')
+    results   = []
+ 
+    if date_from and date_to: 
+        conn = get_db_connection()#встановлюється зʼєднання з базою двних
+        #формуівння та надсилання SQL-запиту
+        results = conn.execute(''' 
+            SELECT  Employee.id_employee,
+                    Employee.empl_surname,
+                    Employee.empl_name,
+                    Employee.empl_patronymic,
+                    COUNT(Check_bill.check_number) AS total_checks,
+                    SUM(Check_bill.sum_total) AS total_revenue
+            FROM Employee 
+            LEFT JOIN Check_bill ON Employee.id_employee = Check_bill.id_employee
+            WHERE Employee.empl_role = 'Cashier'
+              AND DATE(Check_bill.print_date) BETWEEN DATE(?) AND DATE(?)
+            GROUP BY Employee.id_employee, Employee.empl_surname, Employee.empl_name, Employee.empl_patronymic
+            ORDER BY total_revenue DESC
+        ''', (date_from, date_to)).fetchall()
+        conn.close()#закриваємо зʼєднання з бд
+ #передає результат за шаблоном після обробки бд 
+    return render_template('analytics/cashier_performance.html',
+                           results=results,
+                           date_from=date_from,
+                           date_to=date_to)
+
+#Запит 2 (Чорна) - Касири, які продали усі акційні товари 
+
+@analytics_bp.route('/cashiers_all_promo')
+@login_required
+@roles_required('Manager')
+def cashiers_all_promo():
+    conn = get_db_connection()
+    cashiers = conn.execute('''
+        SELECT Employee.id_employee, Employee.empl_surname, Employee.empl_name, Employee.empl_patronymic
+        FROM Employee 
+        WHERE Employee.empl_role = 'Cashier'
+          AND NOT EXISTS (
+              SELECT Store_Product.UPC
+              FROM Store_Product 
+              WHERE Store_Product.promotional_product = 1
+                AND Store_Product.UPC NOT IN (
+                    SELECT Sale.UPC
+                    FROM Sale 
+                    JOIN Check_bill ON Sale.check_number = Check_bill.check_number
+                    WHERE Check_bill.id_employee = Employee.id_employee
+                )
+          )
+    ''').fetchall()
+    conn.close()
+ 
+    return render_template('analytics/cashiers_all_promo.html', cashiers=cashiers)
+
+# 1 Оксана 
+@analytics_bp.route('/category_sales')#знаходить маршрут  і передає виконання функції
+@login_required #перевіряє чи авторизований користувач 
+@roles_required('Manager') #перевіряє роль
+def category_sales():
+    min_items_str = request.args.get('min_items', '').strip()# зчитуж значення паоаметра, якшо немає - ставить пропуск
+    results = []
+    min_items = None 
+
+    if min_items_str: #виконує тільки якщо поле не пусте
+        try: 
+            min_items = int(min_items_str) #конвертує рядок у число 
+            conn = get_db_connection() #встановлюється зʼєднання з базою двних
+            #формуівння та надсилання SQL-запиту, параметр передається окремо
+            results = conn.execute('''
+                SELECT  c.category_number,
+                        c.category_name,
+                        SUM(s.product_number) AS total_items_sold
+                FROM Category AS c
+                INNER JOIN Product AS p  ON c.category_number = p.category_number
+                INNER JOIN Store_Product AS sp ON p.id_product = sp.id_product
+                INNER JOIN Sale AS s ON sp.UPC = s.UPC
+                GROUP BY c.category_number, c.category_name
+                HAVING SUM(s.product_number) > ?
+                ORDER BY total_items_sold DESC
+            ''', (min_items,)).fetchall()
+            conn.close() #закриваємо зʼєднання 
+        except ValueError: #ловить помилку, якщо не можна перевести поле у числове значення
+            flash("It has to be an integer", "danger")
+#передає результати за шаблоном 
+    return render_template('analytics/category_analytics.html',
+                           results=results,
+                           min_items=min_items_str)
+
+# Оксана 
+@analytics_bp.route('/cashiers_category_coverage')
+@login_required
+@roles_required('Manager')
+def cashiers_category_coverage():
+    conn = get_db_connection()
+    cashiers = conn.execute('''
+        SELECT e.empl_surname, e.id_employee
+        FROM Employee AS e
+        WHERE e.empl_role = 'Cashier'
+          AND e.phone_number LIKE '+38097%'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM Check_bill AS cb
+              WHERE cb.id_employee = e.id_employee
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM Sale AS s
+                    INNER JOIN Store_Product AS sp ON s.UPC = sp.UPC
+                    INNER JOIN Product AS p  ON sp.id_product = p.id_product
+                    WHERE s.check_number = cb.check_number
+                      AND p.category_number = 1
+                )
+          )
+        ORDER BY e.empl_surname
+    ''').fetchall()
+    conn.close()
+
+    return render_template('analytics/cashiers_category_coverage.html', cashiers=cashiers)

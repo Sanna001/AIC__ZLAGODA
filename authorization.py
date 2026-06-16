@@ -17,12 +17,21 @@ def login():
         password = request.form.get('password', '')
 
         conn = get_db_connection()
-        user = conn.execute("""
-            SELECT * FROM Employee 
-            WHERE LOWER(empl_surname) = LOWER(?) 
-              AND LOWER(empl_name) = LOWER(?) 
-              AND LOWER(empl_patronymic) = LOWER(?)
-        """, (surname, name, patronymic)).fetchone()
+        if not patronymic:
+            user = conn.execute("""
+                SELECT * FROM Employee 
+                WHERE LOWER(empl_surname) = LOWER(?) 
+                  AND LOWER(empl_name) = LOWER(?) 
+                  AND (empl_patronymic IS NULL OR LOWER(empl_patronymic) = '')
+            """, (surname, name)).fetchone()
+        else:
+            user = conn.execute("""
+                SELECT * FROM Employee 
+                WHERE LOWER(empl_surname) = LOWER(?) 
+                  AND LOWER(empl_name) = LOWER(?) 
+                  AND LOWER(empl_patronymic) = LOWER(?)
+            """, (surname, name, patronymic)).fetchone()
+            
         conn.close()
 
         if user and check_password_hash(user['password_hash'], password):
