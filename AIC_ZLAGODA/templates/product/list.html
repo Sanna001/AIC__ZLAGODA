@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Product catalog{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">Catalog of supermarket products</h1>
+    <div class="d-flex gap-2">
+        {% if session.get('role') == 'Manager' %}
+            <a href="{{ url_for('analytics.print_report', report_type='products', search_name=request.args.get('search_name', ''), category_number=request.args.get('category_id', '')) }}"
+               target="_blank" class="btn btn-outline-secondary">
+                Print report
+            </a>
+            <a href="{{ url_for('product.add_product') }}" class="btn btn-primary">
+                Add new product
+            </a>
+        {% elif session.get('role') == 'Cashier' %}
+            <a href="{{ url_for('analytics.print_report', report_type='products', search_name=request.args.get('search_name', ''), category_number=request.args.get('category_id', '')) }}"
+               target="_blank" class="btn btn-outline-secondary">
+                Print list
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('product.manage_products') }}" class="row g-3">
+            <div class="col-md-5">
+                <input type="text" name="search_name" class="form-control"
+                       placeholder="Search by product name..."
+                       value="{{ search_name }}">
+            </div>
+            <div class="col-md-4">
+                <select name="category_id" class="form-select">
+                    <option value="">All categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.category_number }}"
+                        {% if cat_filter|string == cat.category_number|string %}selected{% endif %}>
+                        {{ cat.category_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Find</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        General list of product items
+        {% if products %}
+            <span class="badge bg-secondary ms-2">{{ products|length }} positions</span>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product name</th>
+                        <th>Category</th>
+                        <th>Characteristics</th>
+                        {% if session.get('role') == 'Manager' %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in products %}
+                    <tr>
+                        <td><code>{{ prod.id_product }}</code></td>
+                        <td><strong>{{ prod.product_name }}</strong></td>
+                        <td><span class="badge bg-light text-dark">{{ prod.category_name }}</span></td>
+                        <td class="text-muted"><small>{{ prod.characteristics or 'No description' }}</small></td>
+                        {% if session.get('role') == 'Manager' %}
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('product.edit_product', id_product=prod.id_product) }}"
+                                   class="btn btn-sm btn-outline-primary">Edit</a>
+                                <form method="POST"
+                                      action="{{ url_for('product.delete_product', id_product=prod.id_product) }}"
+                                      onsubmit="return confirm('Delete product {{ prod.product_name }}?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="{% if session.get('role') == 'Manager' %}5{% else %}4{% endif %}"
+                            class="text-center text-muted py-4">No products found in the catalog</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

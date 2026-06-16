@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Cashier Sales | AIS Zlagoda{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title m-0">Cashier Sales Report for Period</h1>
+        <a href="{{ url_for('check.list_checks') }}" class="btn btn-outline-secondary">
+            Back to Archive
+        </a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('check.cashier_sales_report') }}" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Cashier</label>
+                    <select name="cashier_id" class="form-select" required>
+                        <option value="">-- Select Cashier --</option>
+                        {% for c in cashiers %}
+                        <option value="{{ c.id_employee }}"
+                            {% if cashier_id|string == c.id_employee|string %}selected{% endif %}>
+                            {{ c.empl_surname }} {{ c.empl_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Generate Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if cashier_info %}
+    <div class="card shadow-sm mb-4 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                {{ cashier_info.empl_surname }} {{ cashier_info.empl_name }}
+                &nbsp;|&nbsp; {{ date_from }} — {{ date_to }}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if report and report.checks_count %}
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-2 fw-bold text-primary">{{ report.checks_count }}</div>
+                        <div class="text-muted">Total Checks</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-2 fw-bold text-success">{{ "%.2f"|format(report.total_sum) }} UAH</div>
+                        <div class="text-muted">Total Sales</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 bg-light rounded">
+                        <div class="fs-2 fw-bold text-warning">{{ "%.2f"|format(report.total_vat) }} UAH</div>
+                        <div class="text-muted">Total VAT</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if products %}
+            <h5 class="mt-4 mb-3 border-bottom pb-2">Product Details</h5>
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Product</th>
+                        <th class="text-center">Sold (pcs.)</th>
+                        <th class="text-end">Sales Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td>{{ p.product_name }}</td>
+                        <td class="text-center">{{ p.total_qty }}</td>
+                        <td class="text-end">{{ "%.2f"|format(p.total_price) }} UAH</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-secondary fw-bold">
+                    <tr>
+                        <td>Total</td>
+                        <td></td>
+                        <td class="text-end">{{ "%.2f"|format(report.total_sum) }} UAH</td>
+                    </tr>
+                </tfoot>
+            </table>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-warning mt-3 mb-0">
+                No checks found for the specified period.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

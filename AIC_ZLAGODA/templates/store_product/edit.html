@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit product on shelf{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Edit product: {{ store_product.UPC }}</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            
+            <div class="mb-3">
+                <label class="form-label">UPC</label>
+                <input type="text" class="form-control" value="{{ store_product.UPC }}" readonly>
+                <small class="text-muted">UPC cannot be changed</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Product</label>
+                <select name="id_product" class="form-select" required>
+                    {% for p in products %}
+                        <option value="{{ p.id_product }}" {% if p.id_product == store_product.id_product %}selected{% endif %}>
+                            {{ p.product_name }} (ID: {{ p.id_product }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Sale price (UAH)</label>
+                    <input type="number" step="0.01" name="selling_price" class="form-control" 
+                           value="{{ store_product.selling_price }}" required min="0">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="products_number" class="form-control" 
+                           value="{{ store_product.products_number }}" required min="0">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">UPC of promotional product (optional)</label>
+                <input type="text" name="UPC_prom" class="form-control" value="{{ store_product.UPC_prom or '' }}">
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="promotional_product" value="1" 
+                       class="form-check-input" id="isPromo" 
+                       {% if store_product.promotional_product == 1 %}checked{% endif %}>
+                <label class="form-check-label" for="isPromo">Promotional product</label>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success">Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

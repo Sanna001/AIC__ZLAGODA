@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between mb-4">
+    <h1 class="page-title">Product Categories</h1>
+    <a href="{{ url_for('category.add_category') }}" class="btn btn-primary">Add Category</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Category Name</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('product.manage_products', category_id=cat.category_number) }}" class="text-decoration-none fw-bold text-dark">
+                            {{ cat.category_name }}
+                        </a>
+                    </td>
+                    <td class="text-end">
+                        <form action="{{ url_for('category.delete_category', category_number=cat.category_number) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('WARNING: This will delete the category and ALL products within it. Continue?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete Category</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

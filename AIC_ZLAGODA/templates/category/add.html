@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Add category{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow" style="max-width: 500px; margin: auto;">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Add new category</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('category.add_category') }}">
+                <div class="mb-3">
+                    <label class="form-label">Category name</label>
+                    <input type="text" name="category_name" class="form-control" required placeholder="For example: Fruits">
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('category.list_categories') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

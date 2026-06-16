@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report: {{ report_type }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()">PRINT REPORT</button>
+        <a href="{{ url_for('analytics.financial_report') }}">Back</a>
+    </div>
+
+    <h1>Report: {{ report_type|upper }}</h1>
+    
+    <table>
+        {% if report_type == 'employees' %}
+            <tr><th>ID</th><th>Surname</th><th>Name</th><th>Role</th><th>Salary</th></tr>
+            {% for row in data %}
+            <tr><td>{{ row.id_employee }}</td><td>{{ row.empl_surname }}</td><td>{{ row.empl_name }}</td><td>{{ row.empl_role }}</td><td>{{ row.salary }}</td></tr>
+            {% endfor %}
+        
+        {% elif report_type == 'checks' %}
+            <tr><th>Check #</th><th>Cashier</th><th>Date</th><th>Total</th><th>VAT</th></tr>
+            {% for row in data %}
+            <tr><td>{{ row.check_number }}</td><td>{{ row.empl_surname }}</td><td>{{ row.print_date }}</td><td>{{ row.sum_total }}</td><td>{{ row.vat }}</td></tr>
+            {% endfor %}
+
+        {% endif %}
+    </table>
+</body>
+</html>

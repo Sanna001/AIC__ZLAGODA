@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Category Analytics{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Analytics: Category Sales</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('analytics.category_sales') }}" class="row g-3 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label">Minimum items sold:</label>
+                    <input type="number" name="min_items" class="form-control" value="{{ min_items }}" required min="0">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if results is not none %}
+        {% if results %}
+            <table class="table table-striped table-hover shadow-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Category Number</th>
+                        <th>Category Name</th>
+                        <th>Total Items Sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %} 
+                    <tr>
+                        <td>{{ row.category_number }}</td>
+                        <td>{{ row.category_name }}</td>
+                        <td>{{ row.total_items_sold }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info">No categories found with sales above {{ min_items }}.</div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

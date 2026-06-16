@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}MAIN PAGE{% endblock %}
+
+{% block content %}
+<div class="page-title mb-4 fs-2 fw-bold">{{ name }}</div>
+
+{% if role == 'Manager' %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Human resource management</div>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('employees.list_employees') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">Staff</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Goods and categories</div>
+                </div>
+                <div class="mt-auto d-flex flex-column gap-2">
+                    <a href="{{ url_for('product.manage_products') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">Products</a>
+                    <a href="{{ url_for('category.list_categories') }}" class="btn btn-outline-secondary btn-lg w-100 py-2 fs-6">Categories</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Fiscal operations</div>
+                </div>
+                <div class="mt-auto d-flex flex-column gap-2">
+                    <a href="{{ url_for('check.list_checks') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">Archive of checks</a>
+                    <a href="{{ url_for('check.generate_report', period_type='today') }}" target="_blank" class="btn btn-success btn-lg w-100 py-2 fs-6">Print today's report</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Items in the store</div>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">View products</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Customers card</div>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('customer_card.manage_customers') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">View clients</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif role == 'Cashier' %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Selling products</div>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('check.create_check') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">Create check</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">My checks</div>
+                </div>
+                <div class="mt-auto d-flex flex-column gap-2">
+                    <a href="{{ url_for('check.my_checks_today') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">For today</a>
+                    <a href="{{ url_for('check.my_checks') }}" class="btn btn-outline-secondary btn-lg w-100 py-2 fs-6">For period</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex">
+        <div class="card h-100 w-100 shadow-sm border-1">
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+                <div>
+                    <div class="h3 fw-bold text-dark mb-4">Products in the store</div>
+                </div>
+                <div class="mt-auto">
+                    <a href="{{ url_for('store_product.list_store_products') }}" class="btn btn-primary btn-lg w-100 py-2 fs-6">View</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

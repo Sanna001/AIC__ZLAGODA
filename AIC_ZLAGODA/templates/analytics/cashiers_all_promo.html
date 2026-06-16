@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Cashiers — Full Promo Coverage{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">Cashiers Who Sold Every Promotional Product</h1>
+    <a href="{{ url_for('auth.dashboard') }}" class="btn btn-outline-secondary">
+        Back to Dashboard
+    </a>
+</div>
+
+<div class="alert alert-info">
+    This report shows cashiers who have sold <strong>at least one unit of every promotional product</strong> currently in the store.
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Qualifying cashiers</span>
+        <span class="badge bg-secondary">{{ cashiers|length }} found</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in cashiers %}
+                    <tr>
+                        <td><code>{{ emp.id_employee }}</code></td>
+                        <td>
+                            <strong>{{ emp.empl_surname }} {{ emp.empl_name }} {{ emp.empl_patronymic or '' }}</strong>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" class="text-center text-muted py-4">
+                            No cashier has sold all promotional products yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

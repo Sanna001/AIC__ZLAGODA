@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title m-0">Customer Discount Cards</h1>
+    <div class="d-flex gap-2">
+        {% if session.get('role') == 'Manager' %}
+        <a href="{{ url_for('analytics.print_report', report_type='customers', search_surname=search_surname, percent=percent) }}"
+           target="_blank" class="btn btn-outline-secondary">
+            Print Customer Report
+        </a>
+        {% endif %}
+        {% if session.get('role') in ('Manager', 'Cashier') %}
+        <a href="{{ url_for('customer_card.add_customer') }}" class="btn btn-primary">
+            Add New Customer
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('customer_card.manage_customers') }}" class="row g-3">
+            <div class="col-md-5">
+                <input type="text" name="search_surname" class="form-control"
+                       placeholder="Search by surname..."
+                       value="{{ search_surname }}">
+            </div>
+            {% if session.get('role') == 'Manager' %}
+            <div class="col-md-4">
+                <input type="number" name="percent" class="form-control"
+                       placeholder="Discount (%)"
+                       value="{{ percent }}">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+            {% else %}
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Registered Regular Customers</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Card Number</th>
+                        <th>Surname and Name</th>
+                        <th>Phone</th>
+                        <th>Discount</th>
+                        {% if session.get('role') in ('Manager', 'Cashier') %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card in customers %}
+                    <tr>
+                        <td><code>{{ card.card_number }}</code></td>
+                        <td><strong>{{ card.cust_surname }} {{ card.cust_name }}</strong></td>
+                        <td>{{ card.phone_number or '-' }}</td>
+                        <td><span class="badge bg-success">{{ card.percent }}%</span></td>
+                        {% if session.get('role') in ('Manager', 'Cashier') %}
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('customer_card.edit_customer', card_id=card.card_number) }}"
+                                   class="btn btn-sm btn-outline-primary">Edit</a>
+                                {% if session.get('role') == 'Manager' %}
+                                <form method="POST"
+                                      action="{{ url_for('customer_card.delete_customer', card_id=card.card_number) }}"
+                                      onsubmit="return confirm('Delete card for {{ card.cust_surname }}?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="{% if session.get('role') in ('Manager', 'Cashier') %}5{% else %}4{% endif %}"
+                            class="text-center text-muted py-4">No cards found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Cashiers Category Coverage{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Cashiers Coverage (Beverages Category)</h2>
+    <table class="table table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Surname</th>
+                <th>Employee ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cashier in cashiers %}
+            <tr>
+                <td>{{ cashier.empl_surname }}</td>
+                <td>{{ cashier.id_employee }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2" class="text-center">No cashiers found meeting the criteria.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

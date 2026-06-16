@@ -1,0 +1,141 @@
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from backend.initdb import get_db_connection
+from decorators import login_required, roles_required
+
+product_bp = Blueprint('product', __name__, url_prefix='/products')
+
+# товари за назвою, фільтр за категорією
+@product_bp.route('/')
+@login_required
+def manage_products():
+    cat_filter = request.args.get('category_id', '')
+    search_name = request.args.get('search_name', '').strip() 
+
+    query = '''
+        SELECT p.*, c.category_name FROM Product p
+        JOIN Category c ON p.category_number = c.category_number
+        WHERE 1=1
+    '''
+    params = []
+
+    # Фільтрація за категорією
+    if cat_filter:
+        query += " AND p.category_number = ?"
+        params.append(cat_filter)
+    
+    # Фільтрація за назвою товару
+    if search_name:
+        query += " AND LOWER(p.product_name) LIKE LOWER(?)"
+        params.append(f'%{search_name}%')
+
+    query += " ORDER BY p.product_name"
+
+    conn = get_db_connection()
+    products = conn.execute(query, params).fetchall()
+    categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
+    conn.close()
+    
+    return render_template('product/list.html',
+                           products=products,
+                           categories=categories,
+                           cat_filter=cat_filter,
+                           search_name=search_name)
+
+
+# додати товар
+@product_bp.route('/add', methods=['GET', 'POST'])
+@login_required
+@roles_required('Manager')
+def add_product():
+    conn = get_db_connection()
+    categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
+
+    if request.method == 'POST':
+        cat_num = request.form.get('category_number', '').strip()
+        name = request.form.get('product_name', '').strip()
+        chars = request.form.get('characteristics', '').strip() or None
+
+        if not cat_num or not name:
+            flash("Please fill in all required fields!", "danger")
+            conn.close()
+            return render_template('product/add.html', categories=categories)
+
+        try:
+            conn.execute(
+                'INSERT INTO Product (category_number, product_name, characteristics) VALUES (?, ?, ?)',
+                (int(cat_num), name, chars)
+            )
+            conn.commit()
+            flash("Product added successfully!", "success")
+            return redirect(url_for('product.manage_products'))
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error: {str(e)}", "danger")
+        finally:
+            conn.close()
+
+    conn.close()
+    return render_template('product/add.html', categories=categories)
+
+
+# редагувати товар
+@product_bp.route('/edit/<int:id_product>', methods=['GET', 'POST'])
+@login_required
+@roles_required('Manager')
+def edit_product(id_product):
+    conn = get_db_connection()
+    product = conn.execute(
+        'SELECT * FROM Product WHERE id_product = ?', (id_product,)
+    ).fetchone()
+    categories = conn.execute('SELECT * FROM Category ORDER BY category_name').fetchall()
+
+    if not product:
+        conn.close()
+        flash("Product not found!", "danger")
+        return redirect(url_for('product.manage_products'))
+
+    if request.method == 'POST':
+        cat_num = request.form.get('category_number', '').strip()
+        name = request.form.get('product_name', '').strip()
+        chars = request.form.get('characteristics', '').strip() or None
+
+        if not cat_num or not name:
+            flash("Please fill in all required fields!", "danger")
+            conn.close()
+            return render_template('product/edit.html', product=product, categories=categories)
+
+        try:
+            conn.execute('''
+                UPDATE Product
+                SET category_number = ?, product_name = ?, characteristics = ?
+                WHERE id_product = ?
+            ''', (int(cat_num), name, chars, id_product))
+            conn.commit()
+            flash("Product updated successfully!", "success")
+            return redirect(url_for('product.manage_products'))
+        except Exception as e:
+            conn.rollback()
+            flash(f"Error: {str(e)}", "danger")
+        finally:
+            conn.close()
+
+    conn.close()
+    return render_template('product/edit.html', product=product, categories=categories)
+
+
+# видалити товар менеджер 
+@product_bp.route('/delete/<int:id_product>', methods=['POST'])
+@login_required
+@roles_required('Manager')
+def delete_product(id_product):
+    conn = get_db_connection()
+    try:
+        conn.execute('DELETE FROM Product WHERE id_product = ?', (id_product,))
+        conn.commit()
+        flash("Product deleted successfully!", "success")
+    except Exception:
+        conn.rollback()
+        flash("Cannot delete product that is present in the store or receipts!", "danger")
+    finally:
+        conn.close()
+    return redirect(url_for('product.manage_products'))

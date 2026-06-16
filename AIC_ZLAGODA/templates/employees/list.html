@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Employees{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title m-0">Staff Management</h1>
+    <div class="page-actions">
+        <a href="{{ url_for('analytics.print_report', report_type='employees', role=request.args.get('role', '')) }}"
+           target="_blank" class="btn-report manager-only">
+            Print Employee Report
+        </a>
+        <a href="{{ url_for('employees.add_employee') }}" class="btn btn-primary manager-only">
+            Register Employee
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('employees.list_employees') }}" class="row g-3">
+            <div class="col-md-6">
+                <select name="role" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="Manager" {% if request.args.get('role') == 'Manager' %}selected{% endif %}>Managers</option>
+                    <option value="Cashier" {% if request.args.get('role') == 'Cashier' %}selected{% endif %}>Cashiers</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Supermarket Staff</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Salary</th>
+                        <th>Phone</th>
+                        <th>City / Street</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td><code>{{ emp.id_employee }}</code></td>
+                        <td>
+                            <a href="{{ url_for('employees.view_employee', id_employee=emp.id_employee) }}" class="text-decoration-none">
+                                <strong>{{ emp.empl_surname }} {{ emp.empl_name }} {{ emp.empl_patronymic }}</strong>
+                            </a>
+                        </td>
+                        <td>
+                            {% if emp.empl_role == 'Manager' %}
+                                <span class="badge bg-danger">Manager</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">Cashier</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ emp.salary }} UAH</td>
+                        <td>{{ emp.phone_number }}</td>
+                        <td>{{ emp.city }}, {{ emp.street }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No employees found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
